@@ -1,4 +1,4 @@
-export const BASE = "http://10.164.177.103:8080";
+export const BASE = "https://spotty-snails-bake.loca.lt";
 
 export async function apiFetch(path, opts = {}) {
   const res = await fetch(`${BASE}${path}`, opts);

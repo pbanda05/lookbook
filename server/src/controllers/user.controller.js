@@ -44,11 +44,11 @@ export async function createDemoUser(req, res, next) {
 export async function syncUser(req, res, next) {
     try {
       const { uid, email, name, picture } = req.user || {};
-      if (!uid || !email) return res.status(400).json({ message: "Invalid token claims" });
+      if (!uid) return res.status(400).json({ message: "Invalid token claims" }); // only uid required
   
       const update = {
         firebaseUid: uid,
-        email,
+        email: email || null,              // may be null for anonymous
         name: name || "New User",
         avatarUrl: picture,
       };
@@ -60,7 +60,9 @@ export async function syncUser(req, res, next) {
       );
   
       res.status(200).json({ user, synced: true });
-    } catch (err) { next(err); }
+    } catch (err) {
+      next(err);
+    }
   }
   
   // (Optional) also export a default bag to avoid named-import issues
