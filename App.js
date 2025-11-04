@@ -1,26 +1,40 @@
-// App.js
-import { DefaultTheme, NavigationContainer } from '@react-navigation/native';
-import { StatusBar } from 'expo-status-bar';
-import React from 'react';
-import { SafeAreaProvider } from 'react-native-safe-area-context';
+import { signInAnonymously } from "firebase/auth";
+import React from "react";
+import { Alert, Button, View } from "react-native";
+import { getFirebaseAuth } from "./firebaseConfig";
+import { apiFetch } from "./services/api";
 
-import RootNavigator from './navigation/RootNavigator';
-import { ThemeProvider } from './theme'; // <-- your custom provider
+async function testBackendAuth() {
+  try {
+    const auth = getFirebaseAuth();
 
-const navTheme = {
-  ...DefaultTheme,
-  colors: { ...DefaultTheme.colors, background: '#FFFFFF' },
-};
+    // 1) simple login
+    const cred = await signInAnonymously(auth);
+    const idToken = await cred.user.getIdToken();
+
+    // 2) sync user to backend
+    await apiFetch("/api/users/sync", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+
+    // 3) get profile
+    const me = await apiFetch("/api/users/me", {
+      headers: { Authorization: `Bearer ${idToken}` },
+    });
+
+    console.log("ME:", me);
+    Alert.alert("✅ Success", `Welcome ${me.user?.email || "user"}!`);
+  } catch (e) {
+    console.error(e);
+    Alert.alert("❌ Error", String(e.message || e));
+  }
+}
 
 export default function App() {
   return (
-    <SafeAreaProvider>
-      <ThemeProvider>
-        <NavigationContainer theme={navTheme}>
-          <StatusBar style="dark" />
-          <RootNavigator />
-        </NavigationContainer>
-      </ThemeProvider>
-    </SafeAreaProvider>
+    <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
+      <Button title="Test Backend Connection" onPress={testBackendAuth} />
+    </View>
   );
 }

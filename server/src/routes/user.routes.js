@@ -1,13 +1,14 @@
 import { Router } from "express";
-import { getMe, createDemoUser } from "../controllers/user.controller.js";
+import * as users from "../controllers/user.controller.js"; // robust namespace import
+import { auth } from "../middleware/auth.js";
 
 const router = Router();
 
-// Example routes
-// GET /api/users/me
-router.get("/me", getMe);
+// TEMP: verify what's exported (watch your server logs once)
+console.log("user.controller exports:", Object.keys(users));
 
-// POST /api/users/demo
-router.post("/demo", createDemoUser);
+router.get("/me", auth, users.getMe);
+router.post("/sync", auth, users.syncUser);
+router.post("/demo", users.createDemoUser);
 
 export default router;
