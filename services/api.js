@@ -1,7 +1,4 @@
-import { Platform } from "react-native";
-
-const BASE =
-  Platform.OS === "android" ? "http://10.0.2.2:8080" : "http://localhost:8080";
+export const BASE = "http://10.164.177.103:8080";
 
 export async function apiFetch(path, opts = {}) {
   const res = await fetch(`${BASE}${path}`, opts);
