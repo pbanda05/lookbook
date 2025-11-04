@@ -7,24 +7,20 @@ import { apiFetch } from "./services/api";
 async function testBackendAuth() {
   try {
     const auth = getFirebaseAuth();
-
-    // 1) simple login
     const cred = await signInAnonymously(auth);
     const idToken = await cred.user.getIdToken();
 
-    // 2) sync user to backend
     await apiFetch("/api/users/sync", {
       method: "POST",
       headers: { Authorization: `Bearer ${idToken}` },
     });
 
-    // 3) get profile
     const me = await apiFetch("/api/users/me", {
       headers: { Authorization: `Bearer ${idToken}` },
     });
 
     console.log("ME:", me);
-    Alert.alert("✅ Success", `Welcome ${me.user?.email || "user"}!`);
+    Alert.alert("✅ Success", `Hello ${me.user?.email || "user"}!`);
   } catch (e) {
     console.error(e);
     Alert.alert("❌ Error", String(e.message || e));
