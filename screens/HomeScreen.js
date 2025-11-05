@@ -1,4 +1,3 @@
-// screens/HomeScreen.js
 import React from 'react';
 import { FlatList, Image, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';

@@ -1,7 +1,6 @@
-// screens/DebugScreen.js
 import React, { useState } from 'react';
 import { Platform, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
-import { auth } from '../firebase';
+import { auth } from '../firebaseConfig';
 
 const API = process.env.EXPO_PUBLIC_API_URL;
 

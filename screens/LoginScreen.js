@@ -1,9 +1,8 @@
-// screens/LoginScreen.js
 import { signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
 import { Alert, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
-import { auth } from '../firebase';
+import { auth } from '../firebaseConfig';
 
 export default function LoginScreen({ navigation }) {
   const insets = useSafeAreaInsets();

@@ -1,4 +1,3 @@
-// App.js
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
@@ -7,14 +6,15 @@ import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // screens
-import ClosetScreen from './screens/ClosetScreen';
-import GenerateScreen from './screens/GenerateScreen';
-import HomeScreen from './screens/HomeScreen';
-import LoginScreen from './screens/LoginScreen';
-import ProfileScreen from './screens/ProfileScreen';
-import SavedScreen from './screens/SavedScreen'; // <- label is "Saved" now
-import TrendsScreen from './screens/TrendsScreen';
-import WelcomeScreen from './screens/WelcomeScreen';
+import ClosetScreen from './screens/ClosetScreen.js';
+import GenerateScreen from './screens/GenerateScreen.js';
+import HomeScreen from './screens/HomeScreen.js';
+import LoginScreen from './screens/LoginScreen.js';
+import ProfileScreen from './screens/ProfileScreen.js';
+import SavedScreen from './screens/SavedScreen.js';
+import TrendsScreen from './screens/TrendsScreen.js';
+import WelcomeScreen from './screens/WelcomeScreen.js';
+import WishListScreen from './screens/WishListScreen.js'; // <- exact case + .js
 
 const Stack = createNativeStackNavigator();
 const Tabs = createBottomTabNavigator();

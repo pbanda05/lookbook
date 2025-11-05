@@ -1,4 +1,3 @@
-// screens/SavedScreen.js
 import { Ionicons } from '@expo/vector-icons';
 import React from 'react';
 import { StyleSheet, Text, View } from 'react-native';

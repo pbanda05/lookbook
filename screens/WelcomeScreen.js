@@ -1,4 +1,3 @@
-// screens/WelcomeScreen.js
 import { MaterialCommunityIcons } from '@expo/vector-icons';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -35,7 +34,7 @@ export default function WelcomeScreen({ navigation }) {
 }
 
 const styles = StyleSheet.create({
-  
+
   logo: {
     width: 140,
     height: 140,
