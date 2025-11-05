@@ -1,81 +1,43 @@
-import { signInAnonymously } from "firebase/auth";
-import React from "react";
-import { Alert, Button, View } from "react-native";
-import { getFirebaseAuth } from "./firebaseConfig";
-import { apiFetch, BASE } from "./services/api";
+// App.js
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { NavigationContainer } from '@react-navigation/native';
+import { createNativeStackNavigator } from '@react-navigation/native-stack';
+import React from 'react';
 
-async function testHealth() {
-  try {
-    const res = await fetch(`${BASE}/health`);
-    const text = await res.text();
-    Alert.alert("✅ Backend Responded", text);
-  } catch (e) {
-    Alert.alert("❌ Backend not reachable", e.message);
-  }
-}
+// screens
+import ClosetScreen from './screens/ClosetScreen';
+import GenerateScreen from './screens/GenerateScreen';
+import HomeScreen from './screens/HomeScreen';
+import ProfileScreen from './screens/ProfileScreen';
+import SavedScreen from './screens/SavedScreen';
+import TrendsScreen from './screens/TrendsScreen';
+import WelcomeScreen from './screens/WelcomeScreen';
+import WishListScreen from './screens/Wishlist.js';
 
-async function testAuthFlow() {
-    try {
-      const auth = getFirebaseAuth();
-  
-      // 1) sign in (anonymous for now)
-      const cred = await signInAnonymously(auth);
-      const idToken = await cred.user.getIdToken();
-  
-      // 2) ensure user exists
-      const syncRes = await fetch(`${BASE}/api/users/sync`, {
-        method: "POST",
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-      if (!syncRes.ok) {
-        const msg = await syncRes.text();
-        throw new Error(`Sync failed: ${syncRes.status} ${msg}`);
-      }
-  
-      // 3) fetch profile
-      const meRes = await fetch(`${BASE}/api/users/me`, {
-        headers: { Authorization: `Bearer ${idToken}` },
-      });
-      const me = await meRes.json();
-  
-      console.log("ME:", me);
-      Alert.alert("✅ Auth Success", me?.user?.email || "user created");
-    } catch (e) {
-      console.error(e);
-      Alert.alert("❌ Auth Error", String(e.message || e));
-    }
-  }
-  
+const Stack = createNativeStackNavigator();
+const Tabs = createBottomTabNavigator();
 
-
-async function testBackendAuth() {
-  try {
-    const auth = getFirebaseAuth();
-    const cred = await signInAnonymously(auth);
-    const idToken = await cred.user.getIdToken();
-
-    await apiFetch("/api/users/sync", {
-      method: "POST",
-      headers: { Authorization: `Bearer ${idToken}` },
-    });
-
-    const me = await apiFetch("/api/users/me", {
-      headers: { Authorization: `Bearer ${idToken}` },
-    });
-
-    console.log("ME:", me);
-    Alert.alert("✅ Success", `Hello ${me.user?.email || "user"}!`);
-  } catch (e) {
-    console.error(e);
-    Alert.alert("❌ Error", String(e.message || e));
-  }
+function MainTabs() {
+  return (
+    <Tabs.Navigator screenOptions={{ headerShown: false }}>
+      <Tabs.Screen name="Home" component={HomeScreen} />
+      <Tabs.Screen name="Closet" component={ClosetScreen} />
+      <Tabs.Screen name="Generate" component={GenerateScreen} />
+      <Tabs.Screen name="Help" component={SavedScreen} />
+      <Tabs.Screen name="WishList" component={WishListScreen} />
+      <Tabs.Screen name="Trends" component={TrendsScreen} />
+      <Tabs.Screen name="Profile" component={ProfileScreen} />
+    </Tabs.Navigator>
+  );
 }
 
 export default function App() {
   return (
-    <View style={{ flex: 1, justifyContent: "center", padding: 24 }}>
-      <Button title="Test Backend" onPress={testHealth} />
-      <Button title="Test Auth" onPress={testAuthFlow} />
-    </View>
+    <NavigationContainer>
+      <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
+        <Stack.Screen name="Welcome" component={WelcomeScreen} />
+        <Stack.Screen name="MainTabs" component={MainTabs} />
+      </Stack.Navigator>
+    </NavigationContainer>
   );
 }

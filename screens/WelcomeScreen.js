@@ -1,36 +1,35 @@
-import { Ionicons } from '@expo/vector-icons';
+// screens/WelcomeScreen.js
 import React from 'react';
-import { StyleSheet, Text, View } from 'react-native';
-import PrimaryButton from '../components/PrimaryButton';
-import SafeScreen from '../components/SafeScreen';
-import { useTheme } from '../theme';
+import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 export default function WelcomeScreen({ navigation }) {
-  const theme = useTheme();
-
   return (
-    <SafeScreen scroll>
-      <View style={styles.container}>
-        <Ionicons name="shirt-outline" size={72} color={theme.colors.primary} />
-        <Text style={[styles.title, { color: theme.colors.text }]}>Lookbook</Text>
-        <Text style={[styles.subtitle, { color: theme.colors.text }]}>
-          Welcome to{'\n'}<Text style={{ fontWeight: '700' }}>LookBook</Text>
-        </Text>
-        <Text style={{ color: theme.colors.subtext, marginTop: 6 }}>
-          Your AI-powered Closet
-        </Text>
-        <PrimaryButton
-          title="Get Started"
-          onPress={() => navigation.replace('Main')}
-          style={{ marginTop: 32 }}
-        />
-      </View>
-    </SafeScreen>
+    <View style={styles.wrap}>
+      <Image
+        source={{ uri: 'https://picsum.photos/seed/lookbook/600/400' }}
+        style={styles.hero}
+      />
+      <Text style={styles.title}>Lookbook</Text>
+      <Text style={styles.sub}>Build your digital closet in minutes.</Text>
+
+      <TouchableOpacity
+        style={styles.cta}
+        onPress={() => navigation.replace('MainTabs')}
+      >
+        <Text style={styles.ctaText}>Get Started</Text>
+      </TouchableOpacity>
+
+      <Text style={styles.note}>You can sign in from the Home screen.</Text>
+    </View>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, alignItems: 'center', justifyContent: 'center', gap: 6 },
-  title: { fontSize: 28, fontWeight: '800', marginTop: 6 },
-  subtitle: { fontSize: 18, textAlign: 'center' },
+  wrap: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 24, backgroundColor: '#F6F7FB' },
+  hero: { width: '100%', height: 220, borderRadius: 16, marginBottom: 24 },
+  title: { fontSize: 36, fontWeight: '800', color: '#13151A' },
+  sub: { fontSize: 16, color: '#6B7280', marginTop: 6, marginBottom: 24 },
+  cta: { backgroundColor: '#6C63FF', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 14 },
+  ctaText: { color: 'white', fontWeight: '700', fontSize: 16 },
+  note: { marginTop: 12, color: '#9095A1' },
 });
