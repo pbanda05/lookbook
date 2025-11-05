@@ -1,8 +1,7 @@
-// screens/WishListScreen.js
 import React from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-export default function WishListScreen() {
+export default function WishlistScreen() {
   return (
     <View style={styles.wrap}>
       <Text style={styles.title}>WishList</Text>
