@@ -1,71 +1,64 @@
 // screens/LoginScreen.js
-import { createUserWithEmailAndPassword, signInWithEmailAndPassword } from 'firebase/auth';
+import { signInWithEmailAndPassword } from 'firebase/auth';
 import React, { useState } from 'react';
-import { KeyboardAvoidingView, Platform, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
+import { Alert, StyleSheet, Text, TextInput, TouchableOpacity } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { auth } from '../firebase';
 
 export default function LoginScreen({ navigation }) {
+  const insets = useSafeAreaInsets();
   const [email, setEmail] = useState('');
-  const [pw, setPw] = useState('');
-  const [err, setErr] = useState(null);
-  const [loading, setLoading] = useState(false);
+  const [password, setPassword] = useState('');
+  const [busy, setBusy] = useState(false);
 
-  async function handleSignIn() {
-    setErr(null); setLoading(true);
+  async function onLogin() {
     try {
-      await signInWithEmailAndPassword(auth, email.trim(), pw);
-      navigation.replace('Home'); // or 'MainTabs' depending on your navigator
+      setBusy(true);
+      await signInWithEmailAndPassword(auth, email.trim(), password);
+      navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
     } catch (e) {
-      setErr(e.message || String(e));
-    } finally { setLoading(false); }
-  }
-
-  async function handleRegister() {
-    setErr(null); setLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, email.trim(), pw);
-      navigation.replace('Home');
-    } catch (e) {
-      setErr(e.message || String(e));
-    } finally { setLoading(false); }
+      Alert.alert('Login failed', String(e?.message || e));
+    } finally {
+      setBusy(false);
+    }
   }
 
   return (
-    <KeyboardAvoidingView style={styles.wrap} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <Text style={styles.title}>Lookbook</Text>
+    <SafeAreaView style={[styles.safe, { paddingTop: insets.top + 8 }]}>
+      <Text style={styles.title}>Sign in</Text>
       <TextInput
         placeholder="Email"
         autoCapitalize="none"
         keyboardType="email-address"
-        style={styles.input}
         value={email}
         onChangeText={setEmail}
+        style={styles.input}
       />
       <TextInput
         placeholder="Password"
         secureTextEntry
+        value={password}
+        onChangeText={setPassword}
         style={styles.input}
-        value={pw}
-        onChangeText={setPw}
       />
-      {err ? <Text style={styles.err}>{err}</Text> : null}
-      <TouchableOpacity style={styles.btn} onPress={handleSignIn} disabled={loading}>
-        <Text style={styles.btnText}>{loading ? 'Signing in…' : 'Sign In'}</Text>
+      <TouchableOpacity style={[styles.btn, busy && { opacity: 0.7 }]} onPress={onLogin} disabled={busy}>
+        <Text style={styles.btnText}>{busy ? 'Signing in…' : 'Sign in'}</Text>
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.btn, styles.ghost]} onPress={handleRegister} disabled={loading}>
-        <Text style={[styles.btnText, styles.ghostText]}>Create Account</Text>
+
+      <TouchableOpacity onPress={() => navigation.replace('Welcome')} style={{ marginTop: 14 }}>
+        <Text style={{ color: '#6B7280' }}>Back to Welcome</Text>
       </TouchableOpacity>
-    </KeyboardAvoidingView>
+    </SafeAreaView>
   );
 }
 
 const styles = StyleSheet.create({
-  wrap: { flex: 1, justifyContent: 'center', padding: 20, gap: 12, backgroundColor: '#fff' },
-  title: { fontSize: 28, fontWeight: '700', textAlign: 'center', marginBottom: 12 },
-  input: { borderWidth: 1, borderColor: '#ddd', borderRadius: 12, padding: 12, fontSize: 16 },
-  btn: { backgroundColor: '#111', padding: 14, borderRadius: 12, alignItems: 'center' },
+  safe: { flex: 1, backgroundColor: '#F6F7FB', paddingHorizontal: 24 },
+  title: { fontSize: 34, fontWeight: '800', marginTop: 12, marginBottom: 16 },
+  input: {
+    backgroundColor: 'white', borderRadius: 12, padding: 14,
+    borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 12,
+  },
+  btn: { backgroundColor: '#6C63FF', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 4 },
   btnText: { color: 'white', fontWeight: '700', fontSize: 16 },
-  ghost: { backgroundColor: 'transparent', borderWidth: 1, borderColor: '#111' },
-  ghostText: { color: '#111' },
-  err: { color: '#b00020', textAlign: 'center' },
 });
