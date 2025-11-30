@@ -3,7 +3,7 @@
 // To use: Set EXPO_PUBLIC_GOOGLE_API_KEY and EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID in your .env file
 
 const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY || 'AIzaSyAan-A74t18rUSxGzYxBuF-60su_xJs-7Q';
-const GOOGLE_SEARCH_ENGINE_ID = process.env.EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID;
+const GOOGLE_SEARCH_ENGINE_ID = process.env.EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID || '3790630ea9d744312';
 const GOOGLE_CUSTOM_SEARCH_URL = 'https://www.googleapis.com/customsearch/v1';
 
 // Fallback: Use Unsplash for product images when Google API is not configured
