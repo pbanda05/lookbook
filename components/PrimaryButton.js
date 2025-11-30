@@ -25,14 +25,14 @@ export default function PrimaryButton({ title = 'Generate', onPress, style }) {
 
 const styles = StyleSheet.create({
   btn: {
-    paddingHorizontal: 20,
-    paddingVertical: 14,
-    borderRadius: 28,
+    paddingHorizontal: 14,
+    paddingVertical: 10,
+    borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
   },
   txt: {
-    fontSize: 18,
+    fontSize: 14,
     fontWeight: '700',
   },
 });

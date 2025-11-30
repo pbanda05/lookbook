@@ -79,7 +79,7 @@ export default function SearchItemScreen({ navigation }) {
           title="Search"
           onPress={handleSearch}
           disabled={searching}
-          style={{ width: 100 }}
+          style={{ minWidth: 80 }}
         />
       </View>
 
