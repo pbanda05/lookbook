@@ -11,12 +11,43 @@ export default function LoginScreen({ navigation }) {
   const [busy, setBusy] = useState(false);
 
   async function onLogin() {
+    if (!email.trim()) {
+      Alert.alert('Email required', 'Please enter your email');
+      return;
+    }
+
+    if (!password) {
+      Alert.alert('Password required', 'Please enter your password');
+      return;
+    }
+
     try {
       setBusy(true);
-      await signInWithEmailAndPassword(auth, email.trim(), password);
+      console.log('Attempting to login with email:', email.trim());
+      const userCredential = await signInWithEmailAndPassword(auth, email.trim(), password);
+      console.log('Login successful:', userCredential.user.uid);
+      console.log('User email:', userCredential.user.email);
       navigation.reset({ index: 0, routes: [{ name: 'MainTabs' }] });
     } catch (e) {
-      Alert.alert('Login failed', String(e?.message || e));
+      console.error('Login error:', e);
+      console.error('Error code:', e.code);
+      console.error('Error message:', e.message);
+      
+      let errorMessage = 'Failed to sign in. Please try again.';
+      if (e.code === 'auth/user-not-found') {
+        errorMessage = 'No account found with this email. Please create an account first.';
+      } else if (e.code === 'auth/wrong-password') {
+        errorMessage = 'Incorrect password. Please try again.';
+      } else if (e.code === 'auth/invalid-email') {
+        errorMessage = 'Please enter a valid email address.';
+      } else if (e.code === 'auth/invalid-credential') {
+        errorMessage = 'Invalid email or password. Please check your credentials.';
+      } else if (e.code === 'auth/network-request-failed') {
+        errorMessage = 'Network error. Please check your internet connection.';
+      } else {
+        errorMessage = `Error: ${e.message || e.code || 'Unknown error'}`;
+      }
+      Alert.alert('Login failed', errorMessage);
     } finally {
       setBusy(false);
     }
@@ -44,8 +75,17 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.btnText}>{busy ? 'Signing in…' : 'Sign in'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity onPress={() => navigation.replace('Welcome')} style={{ marginTop: 14 }}>
-        <Text style={{ color: '#6B7280' }}>Back to Welcome</Text>
+      <TouchableOpacity 
+        onPress={() => navigation.replace('SignUp')} 
+        style={{ marginTop: 14 }}
+      >
+        <Text style={{ color: '#6B7280', textAlign: 'center' }}>
+          Don't have an account? Create one
+        </Text>
+      </TouchableOpacity>
+
+      <TouchableOpacity onPress={() => navigation.replace('Welcome')} style={{ marginTop: 8 }}>
+        <Text style={{ color: '#6B7280', textAlign: 'center' }}>Back to Welcome</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );

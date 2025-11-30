@@ -7,6 +7,8 @@ import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // contexts
 import { ClosetProvider } from './context/ClosetContext';
+import { SavedOutfitsProvider } from './context/SavedOutfitsContext';
+import { UserPreferencesProvider } from './context/UserPreferencesContext';
 import { WishlistProvider } from './context/WishlistContext';
 
 // screens
@@ -18,6 +20,7 @@ import LoginScreen from './screens/LoginScreen.js';
 import ProfileScreen from './screens/ProfileScreen.js';
 import SavedScreen from './screens/SavedScreen.js';
 import SearchItemScreen from './screens/SearchItemScreen.js';
+import SignUpScreen from './screens/SignUpScreen.js';
 import TrendsScreen from './screens/TrendsScreen.js';
 import WelcomeScreen from './screens/WelcomeScreen.js';
 import WishListScreen from './screens/WishListScreen.js'; // <- exact case + .js
@@ -65,15 +68,20 @@ export default function App() {
     <SafeAreaProvider>
       <ClosetProvider>
         <WishlistProvider>
-          <NavigationContainer>
-            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
-              <Stack.Screen name="Welcome" component={WelcomeScreen} />
-              <Stack.Screen name="Login" component={LoginScreen} />
-              <Stack.Screen name="MainTabs" component={MainTabs} />
-              <Stack.Screen name="AddItem" component={AddItemScreen} />
-              <Stack.Screen name="SearchItem" component={SearchItemScreen} />
-            </Stack.Navigator>
-          </NavigationContainer>
+          <SavedOutfitsProvider>
+            <UserPreferencesProvider>
+              <NavigationContainer>
+                <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
+                  <Stack.Screen name="Welcome" component={WelcomeScreen} />
+                  <Stack.Screen name="Login" component={LoginScreen} />
+                  <Stack.Screen name="SignUp" component={SignUpScreen} />
+                  <Stack.Screen name="MainTabs" component={MainTabs} />
+                  <Stack.Screen name="AddItem" component={AddItemScreen} />
+                  <Stack.Screen name="SearchItem" component={SearchItemScreen} />
+                </Stack.Navigator>
+              </NavigationContainer>
+            </UserPreferencesProvider>
+          </SavedOutfitsProvider>
         </WishlistProvider>
       </ClosetProvider>
     </SafeAreaProvider>

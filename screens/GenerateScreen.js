@@ -1,10 +1,11 @@
 import { Ionicons } from '@expo/vector-icons';
 import React, { useState } from 'react';
-import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
+import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import PrimaryButton from '../components/PrimaryButton';
 import SafeScreen from "../components/SafeScreen";
 import { useCloset } from '../context/ClosetContext';
+import { useSavedOutfits } from '../context/SavedOutfitsContext';
 import { generateOutfitWithAI } from '../services/aiService';
 import { useTheme } from '../theme';
 
@@ -12,8 +13,10 @@ export default function GenerateScreen() {
   const [vibe, setVibe] = useState('');
   const [generating, setGenerating] = useState(false);
   const [generatedOutfit, setGeneratedOutfit] = useState(null);
+  const [saved, setSaved] = useState(false);
   const theme = useTheme();
   const { items } = useCloset();
+  const { saveOutfit } = useSavedOutfits();
 
   async function generateOutfit() {
     if (!vibe.trim()) {
@@ -47,6 +50,7 @@ export default function GenerateScreen() {
         description: aiResult.description,
         reasoning: aiResult.reasoning,
       });
+      setSaved(false); // Reset saved state when new outfit is generated
     } catch (error) {
       console.error('Outfit generation error:', error);
       
@@ -124,7 +128,36 @@ export default function GenerateScreen() {
 
         {generatedOutfit && !generating && (
           <View style={[styles.outfitContainer, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}>
-            <Text style={[styles.outfitTitle, { color: theme.colors.text }]}>Your AI-Generated Outfit</Text>
+            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+              <Text style={[styles.outfitTitle, { color: theme.colors.text }]}>Your AI-Generated Outfit</Text>
+              <TouchableOpacity
+                onPress={async () => {
+                  if (!saved) {
+                    try {
+                      await saveOutfit({
+                        ...generatedOutfit,
+                        vibe: vibe.trim(),
+                      });
+                      setSaved(true);
+                      Alert.alert('Success', 'Outfit saved to favorites!');
+                    } catch (error) {
+                      Alert.alert('Error', 'Failed to save outfit');
+                    }
+                  }
+                }}
+                disabled={saved}
+                style={[styles.saveButton, saved && { opacity: 0.5 }]}
+              >
+                <Ionicons 
+                  name={saved ? "heart" : "heart-outline"} 
+                  size={20} 
+                  color={saved ? "#EF4444" : theme.colors.subtext} 
+                />
+                <Text style={[styles.saveButtonText, { color: saved ? "#EF4444" : theme.colors.subtext }]}>
+                  {saved ? 'Saved' : 'Save'}
+                </Text>
+              </TouchableOpacity>
+            </View>
             <Text style={[styles.outfitDescription, { color: theme.colors.subtext }]}>
               {generatedOutfit.description}
             </Text>
@@ -179,8 +212,19 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     padding: 16,
   },
-  outfitTitle: { fontSize: 20, fontWeight: '800', marginBottom: 8 },
-  outfitDescription: { fontSize: 14, marginBottom: 8, fontWeight: '600' },
+  outfitTitle: { fontSize: 20, fontWeight: '800' },
+  saveButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
+    paddingHorizontal: 12,
+    paddingVertical: 6,
+    borderRadius: 20,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  saveButtonText: { fontSize: 14, fontWeight: '600' },
+  outfitDescription: { fontSize: 14, marginBottom: 8, marginTop: 8, fontWeight: '600' },
   outfitReasoning: { fontSize: 12, marginBottom: 16, fontStyle: 'italic' },
   outfitItems: {
     flexDirection: 'row',
