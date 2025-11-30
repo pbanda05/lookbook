@@ -63,14 +63,21 @@ function generateOutfitFallback(closetItems, vibe) {
 }
 
 export async function generateOutfitWithAI(closetItems, vibe) {
-  // If no API key is configured, use smart fallback
-  if (OPENAI_API_KEY === 'YOUR_OPENAI_API_KEY' || !OPENAI_API_KEY) {
-    console.log('Using fallback outfit generation (no API key configured)');
+  // Check if API key is valid (not placeholder and not empty)
+  const hasValidApiKey = OPENAI_API_KEY && 
+                         OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY' && 
+                         OPENAI_API_KEY.trim().length > 0 &&
+                         OPENAI_API_KEY.startsWith('sk-');
+
+  if (!hasValidApiKey) {
+    console.log('⚠️ Using fallback outfit generation (no valid API key configured)');
+    console.log('API Key status:', OPENAI_API_KEY ? 'Present but invalid' : 'Missing');
     // Simulate API delay for better UX
     await new Promise(resolve => setTimeout(resolve, 1500));
     return generateOutfitFallback(closetItems, vibe);
   }
 
+  console.log('🤖 Using OpenAI AI to generate outfit...');
   try {
 
     // Create a list of available items for the AI
@@ -132,18 +139,28 @@ The selectedItemIndices should be the array indices (0-based) of the items you s
     const responseText = data.choices[0].message.content;
     const result = JSON.parse(responseText);
 
+    console.log('✅ AI outfit generated successfully');
+    console.log('Selected items:', result.selectedItemIndices);
+
     return {
       selectedItemIndices: result.selectedItemIndices || [],
       description: result.description || 'Generated outfit',
       reasoning: result.reasoning || '',
     };
   } catch (error) {
-    console.error('AI Generation Error:', error);
+    console.error('❌ AI Generation Error:', error);
     
-    if (error.message?.includes('API key')) {
-      throw new Error('OpenAI API key not configured. Please add your API key in services/aiService.js');
+    // If API call fails, fall back to smart algorithm
+    if (error.message?.includes('API key') || error.message?.includes('401')) {
+      console.log('⚠️ API key error detected, using fallback');
+      await new Promise(resolve => setTimeout(resolve, 500));
+      return generateOutfitFallback(closetItems, vibe);
     }
-    throw error;
+    
+    // For other errors, try fallback before throwing
+    console.log('⚠️ AI generation failed, using fallback algorithm');
+    await new Promise(resolve => setTimeout(resolve, 500));
+    return generateOutfitFallback(closetItems, vibe);
   }
 }
 

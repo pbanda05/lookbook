@@ -154,7 +154,7 @@ export default function GenerateScreen() {
           <View style={styles.loadingContainer}>
             <ActivityIndicator size="large" color={theme.colors.primary} />
             <Text style={[styles.loadingText, { color: theme.colors.subtext }]}>
-              AI is creating your perfect outfit...
+              🤖 AI is analyzing your closet and creating your perfect outfit...
             </Text>
           </View>
         )}
