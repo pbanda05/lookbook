@@ -73,7 +73,6 @@ export default function WishListScreen({ navigation }) {
                       <Image 
                         source={{ uri: item.imageUri }} 
                         style={styles.itemImage}
-                        defaultSource={require('../assets/placeholder.png')}
                         onError={(e) => console.log('Image load error:', e.nativeEvent.error)}
                       />
                     )}
