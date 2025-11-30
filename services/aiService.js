@@ -17,9 +17,29 @@ function generateOutfitFallback(closetItems, vibe) {
     [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
   }
   
-  // Select 3-5 items
+  // Select 3-5 items, ensuring shoes are included if available
+  const shoes = shuffled.filter(item => 
+    item.name?.toLowerCase().includes('shoe') || 
+    item.name?.toLowerCase().includes('sneaker') ||
+    item.name?.toLowerCase().includes('boot') ||
+    item.name?.toLowerCase().includes('sandal') ||
+    item.name?.toLowerCase().includes('air force') ||
+    item.name?.toLowerCase().includes('jordan')
+  );
+  
+  const nonShoes = shuffled.filter(item => !shoes.includes(item));
   const numItems = Math.min(Math.max(3, Math.floor(Math.random() * 3) + 3), shuffled.length);
-  const selectedItems = shuffled.slice(0, numItems);
+  
+  let selectedItems = [];
+  if (shoes.length > 0 && numItems > 0) {
+    // Always include at least one pair of shoes
+    selectedItems.push(shoes[0]);
+    const remaining = numItems - 1;
+    selectedItems = [...selectedItems, ...nonShoes.slice(0, Math.min(remaining, nonShoes.length))];
+  } else {
+    selectedItems = shuffled.slice(0, numItems);
+  }
+  
   const selectedIndices = selectedItems.map(item => closetItems.indexOf(item));
   
   // Generate a description based on vibe
@@ -58,7 +78,7 @@ export async function generateOutfitWithAI(closetItems, vibe) {
       `${index + 1}. ${item.name}`
     ).join('\n');
 
-    const prompt = `You are a fashion stylist. Given the following items in a user's closet and their desired vibe, select 3-5 items that would create a cohesive, stylish outfit.
+    const prompt = `You are a fashion stylist. Given the following items in a user's closet and their desired vibe, select 3-5 items that would create a cohesive, stylish outfit. IMPORTANT: Every outfit MUST include shoes. If there are shoes available in the closet, you MUST include at least one pair of shoes in your selection.
 
 Available items in closet:
 ${itemsList}
@@ -72,7 +92,7 @@ Please respond with ONLY a JSON object in this exact format:
   "reasoning": "Brief explanation of why these items work together"
 }
 
-The selectedItemIndices should be the array indices (0-based) of the items you selected from the list above. Select items that complement each other and match the desired vibe.`;
+The selectedItemIndices should be the array indices (0-based) of the items you selected from the list above. Select items that complement each other and match the desired vibe. CRITICAL: Always include shoes if available in the closet.`;
 
     const response = await fetch(OPENAI_API_URL, {
       method: 'POST',

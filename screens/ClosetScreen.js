@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useMemo, useState } from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
@@ -21,78 +22,84 @@ export default function ClosetScreen({ navigation }) {
   }, [items, q]);
 
   return (
-    <SafeScreen scroll>
-      <View style={styles.container}>
-        <Text style={[styles.header, { color: theme.colors.text }]}>Your Closet</Text>
+    <LinearGradient
+      colors={['#FEF3C7', '#FDE68A', '#FFFFFF']}
+      style={styles.gradient}
+    >
+      <SafeScreen>
+        <View style={styles.container}>
+          <Text style={[styles.header, { color: '#1F2937' }]}>Your Closet</Text>
 
-        <SearchBar
-          placeholder="Search outfits"
-          value={q}
-          onChangeText={setQ}
-        />
+          <SearchBar
+            placeholder="Search outfits"
+            value={q}
+            onChangeText={setQ}
+          />
 
-        {filteredItems.length === 0 ? (
-          <View style={styles.empty}>
-            <Ionicons name="search" size={64} color={theme.colors.tabIcon} />
-            <Text style={[styles.title, { color: theme.colors.text }]}>
-              {items.length === 0 ? 'No items yet' : 'No items found'}
-            </Text>
-            <Text style={[styles.caption, { color: theme.colors.subtext }]}>
-              {items.length === 0
-                ? 'Start building your digital closet'
-                : 'Try a different search term'}
-            </Text>
+          {filteredItems.length === 0 ? (
+            <View style={styles.empty}>
+              <Ionicons name="search" size={64} color="#9CA3AF" />
+              <Text style={[styles.title, { color: '#1F2937' }]}>
+                {items.length === 0 ? 'No items yet' : 'No items found'}
+              </Text>
+              <Text style={[styles.caption, { color: '#6B7280' }]}>
+                {items.length === 0
+                  ? 'Start building your digital closet'
+                  : 'Try a different search term'}
+              </Text>
 
-            {items.length === 0 && (
-              <PrimaryButton
-                title="+  Add Item"
-                onPress={() => navigation.navigate('AddItem')}
-                style={{ marginTop: 14, width: 160 }}
-              />
-            )}
-          </View>
-        ) : (
-          <>
-            <View style={styles.addButtonContainer}>
-              <PrimaryButton
-                title="+  Add Item"
-                onPress={() => navigation.navigate('AddItem')}
-                style={{ width: 140 }}
-              />
-            </View>
-            <FlatList
-              data={filteredItems}
-              keyExtractor={(item) => item.id}
-              numColumns={2}
-              columnWrapperStyle={styles.row}
-              contentContainerStyle={styles.listContent}
-              renderItem={({ item }) => (
-                <View style={[styles.itemCard, { borderColor: theme.colors.border }]}>
-                  {item.imageUri && (
-                    <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
-                  )}
-                  <View style={styles.itemInfo}>
-                    <Text style={[styles.itemName, { color: theme.colors.text }]} numberOfLines={2}>
-                      {item.name}
-                    </Text>
-                    <TouchableOpacity
-                      onPress={() => removeItem(item.id)}
-                      style={styles.deleteButton}
-                    >
-                      <Ionicons name="trash-outline" size={18} color="#EF4444" />
-                    </TouchableOpacity>
-                  </View>
-                </View>
+              {items.length === 0 && (
+                <PrimaryButton
+                  title="+  Add Item"
+                  onPress={() => navigation.navigate('AddItem')}
+                  style={{ marginTop: 14, width: 160 }}
+                />
               )}
-            />
-          </>
-        )}
-      </View>
-    </SafeScreen>
+            </View>
+          ) : (
+            <>
+              <View style={styles.addButtonContainer}>
+                <PrimaryButton
+                  title="+  Add Item"
+                  onPress={() => navigation.navigate('AddItem')}
+                  style={{ width: 140 }}
+                />
+              </View>
+              <FlatList
+                data={filteredItems}
+                keyExtractor={(item) => item.id}
+                numColumns={2}
+                columnWrapperStyle={styles.row}
+                contentContainerStyle={styles.listContent}
+                renderItem={({ item }) => (
+                  <View style={[styles.itemCard, { borderColor: '#E5E7EB' }]}>
+                    {item.imageUri && (
+                      <Image source={{ uri: item.imageUri }} style={styles.itemImage} />
+                    )}
+                    <View style={styles.itemInfo}>
+                      <Text style={[styles.itemName, { color: '#1F2937' }]} numberOfLines={2}>
+                        {item.name}
+                      </Text>
+                      <TouchableOpacity
+                        onPress={() => removeItem(item.id)}
+                        style={styles.deleteButton}
+                      >
+                        <Ionicons name="trash-outline" size={18} color="#EF4444" />
+                      </TouchableOpacity>
+                    </View>
+                  </View>
+                )}
+              />
+            </>
+          )}
+        </View>
+      </SafeScreen>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: { flex: 1 },
   container: { flex: 1, gap: 12 },
   header: { fontSize: 28, fontWeight: '800', alignSelf: 'center', marginBottom: 6 },
   addButtonContainer: { paddingHorizontal: 16, marginBottom: 8 },

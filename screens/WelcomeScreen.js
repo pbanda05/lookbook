@@ -1,60 +1,146 @@
 import { MaterialCommunityIcons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 export default function WelcomeScreen({ navigation }) {
   const insets = useSafeAreaInsets();
+
   return (
-    <SafeAreaView style={[styles.safe, { paddingTop: insets.top + 8 }]}>
-      <View style={styles.logoWrap}>
-        {/* Try to load your logo.png. If it fails, show fallback icon */}
-        <Image
-          source={require('../assets/logo.png')}
-          style={styles.logo}
-          resizeMode="contain"
-        />
-        {/* Fallback (kept behind the image visually similar size) */}
-        <MaterialCommunityIcons name="tshirt-crew" size={56} color="#6C63FF" style={styles.fallback} />
-      </View>
+    <LinearGradient
+      colors={['#667EEA', '#764BA2', '#F093FB']}
+      style={styles.gradient}
+      start={{ x: 0, y: 0 }}
+      end={{ x: 1, y: 1 }}
+    >
+      <SafeAreaView style={[styles.safe, { paddingTop: insets.top + 8 }]}>
+        <View style={styles.logoWrap}>
+          <LinearGradient
+            colors={['#FFFFFF', '#F0F0F0']}
+            style={styles.logoGradient}
+          >
+            <Image
+              source={require('../assets/logo.png')}
+              style={styles.logo}
+              resizeMode="contain"
+            />
+            <MaterialCommunityIcons name="tshirt-crew" size={56} color="#6C63FF" style={styles.fallback} />
+          </LinearGradient>
+        </View>
 
-      <Text style={styles.title}>Lookbook</Text>
-      <Text style={styles.sub}>Build your digital closet in minutes.</Text>
+        <View>
+          <Text style={styles.title}>Lookbook</Text>
+          <Text style={styles.sub}>Build your digital closet in minutes.</Text>
+        </View>
 
-      <TouchableOpacity
-        style={styles.cta}
-        onPress={() => navigation.replace('Login')}
-      >
-        <Text style={styles.ctaText}>Get Started</Text>
-      </TouchableOpacity>
+        <TouchableOpacity
+          style={styles.cta}
+          onPress={() => navigation.replace('Login')}
+          activeOpacity={0.8}
+        >
+          <LinearGradient
+            colors={['#6C63FF', '#8B7FFF']}
+            style={styles.ctaGradient}
+            start={{ x: 0, y: 0 }}
+            end={{ x: 1, y: 0 }}
+          >
+            <Text style={styles.ctaText}>Get Started</Text>
+          </LinearGradient>
+        </TouchableOpacity>
 
-      <Text style={styles.note}>Sign in to access all features.</Text>
-    </SafeAreaView>
+        <Text style={styles.note}>Sign in to access all features.</Text>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-
-  logo: {
-    width: 140,
-    height: 140,
-    alignSelf: 'center',
-    marginBottom: 20,
+  gradient: { flex: 1 },
+  safe: { 
+    flex: 1, 
+    alignItems: 'center', 
+    justifyContent: 'center', 
+    paddingHorizontal: 24 
   },
-
-  safe: { flex: 1, alignItems: 'center', justifyContent: 'center', backgroundColor: '#F6F7FB', paddingHorizontal: 24 },
   logoWrap: {
-    width: 112, height: 112, borderRadius: 56, marginBottom: 18,
-    alignItems: 'center', justifyContent: 'center',
-    backgroundColor: 'white', borderWidth: 1, borderColor: '#ECECEC',
-    shadowColor: '#000', shadowOpacity: 0.06, shadowRadius: 8, elevation: 2,
-    overflow: 'hidden',
+    width: 140, 
+    height: 140, 
+    borderRadius: 70, 
+    marginBottom: 24,
+    alignItems: 'center', 
+    justifyContent: 'center',
+    shadowColor: '#000', 
+    shadowOpacity: 0.3, 
+    shadowRadius: 20, 
+    shadowOffset: { width: 0, height: 10 },
+    elevation: 10,
   },
-  logo: { width: 112, height: 112, resizeMode: 'contain' },
-  fallback: { position: 'absolute', opacity: 0.0 }, // hidden if logo exists
-  title: { fontSize: 40, fontWeight: '800', color: '#13151A' },
-  sub: { fontSize: 18, color: '#6B7280', marginTop: 6, marginBottom: 22, textAlign: 'center' },
-  cta: { backgroundColor: '#6C63FF', paddingVertical: 14, paddingHorizontal: 28, borderRadius: 14 },
-  ctaText: { color: 'white', fontWeight: '700', fontSize: 16 },
-  note: { marginTop: 12, color: '#9095A1' },
+  logoGradient: {
+    width: '100%',
+    height: '100%',
+    borderRadius: 70,
+    alignItems: 'center',
+    justifyContent: 'center',
+    borderWidth: 3,
+    borderColor: '#FFFFFF',
+  },
+  logo: { 
+    width: 100, 
+    height: 100, 
+    resizeMode: 'contain',
+    zIndex: 1,
+  },
+  fallback: { 
+    position: 'absolute', 
+    opacity: 0.0,
+    zIndex: 0,
+  },
+  title: { 
+    fontSize: 48, 
+    fontWeight: '900', 
+    color: '#FFFFFF',
+    textShadowColor: 'rgba(0, 0, 0, 0.3)',
+    textShadowOffset: { width: 0, height: 2 },
+    textShadowRadius: 4,
+    marginBottom: 8,
+  },
+  sub: { 
+    fontSize: 20, 
+    color: '#FFFFFF', 
+    marginTop: 6, 
+    marginBottom: 32, 
+    textAlign: 'center',
+    opacity: 0.95,
+    fontWeight: '500',
+  },
+  cta: { 
+    borderRadius: 30,
+    overflow: 'hidden',
+    shadowColor: '#6C63FF',
+    shadowOpacity: 0.4,
+    shadowRadius: 15,
+    shadowOffset: { width: 0, height: 8 },
+    elevation: 8,
+  },
+  ctaGradient: {
+    paddingVertical: 18,
+    paddingHorizontal: 48,
+    borderRadius: 30,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  ctaText: { 
+    color: '#FFFFFF', 
+    fontWeight: '800', 
+    fontSize: 18,
+    letterSpacing: 0.5,
+  },
+  note: { 
+    marginTop: 20, 
+    color: '#FFFFFF', 
+    opacity: 0.8,
+    fontSize: 14,
+    fontWeight: '500',
+  },
 });

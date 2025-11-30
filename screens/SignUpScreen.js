@@ -130,14 +130,12 @@ export default function SignUpScreen({ navigation }) {
         <Text style={styles.btnText}>{busy ? 'Creating account…' : 'Create Account'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        onPress={() => navigation.replace('Login')} 
-        style={{ marginTop: 14 }}
-      >
-        <Text style={{ color: '#6B7280', textAlign: 'center' }}>
-          Already have an account? Sign in
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.linkContainer}>
+        <Text style={styles.linkText}>Already have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.replace('Login')}>
+          <Text style={styles.linkButton}>Sign in</Text>
+        </TouchableOpacity>
+      </View>
     </SafeAreaView>
   );
 }
@@ -161,5 +159,13 @@ const styles = StyleSheet.create({
     marginTop: 4 
   },
   btnText: { color: 'white', fontWeight: '700', fontSize: 16 },
+  linkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  linkText: { color: '#6B7280', fontSize: 14 },
+  linkButton: { color: '#3B82F6', fontWeight: '600', fontSize: 14 },
 });
 

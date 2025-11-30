@@ -1,49 +1,12 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, FlatList, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import PrimaryButton from '../components/PrimaryButton';
+import { searchShoppingItems } from '../services/shoppingSearch';
 import { useWishlist } from '../context/WishlistContext';
 import { useTheme } from '../theme';
-
-// Mock search results - In production, you'd use a real API like Google Shopping, Amazon, etc.
-const MOCK_SEARCH_RESULTS = [
-  {
-    id: '1',
-    name: 'Nike Air Max 270',
-    image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400',
-    price: '$120',
-    brand: 'Nike',
-  },
-  {
-    id: '2',
-    name: 'Levi\'s 501 Original Jeans',
-    image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400',
-    price: '$89',
-    brand: 'Levi\'s',
-  },
-  {
-    id: '3',
-    name: 'Adidas Originals T-Shirt',
-    image: 'https://images.unsplash.com/photo-1521572163474-6864f9cf17ab?w=400',
-    price: '$35',
-    brand: 'Adidas',
-  },
-  {
-    id: '4',
-    name: 'Zara Blazer',
-    image: 'https://images.unsplash.com/photo-1594938291221-94f313d0a4cd?w=400',
-    price: '$79',
-    brand: 'Zara',
-  },
-  {
-    id: '5',
-    name: 'Converse Chuck Taylor',
-    image: 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=400',
-    price: '$55',
-    brand: 'Converse',
-  },
-];
 
 export default function SearchItemScreen({ navigation }) {
   const insets = useSafeAreaInsets();
@@ -53,23 +16,22 @@ export default function SearchItemScreen({ navigation }) {
   const [results, setResults] = useState([]);
   const [searching, setSearching] = useState(false);
 
-  function handleSearch() {
+  async function handleSearch() {
     if (!searchQuery.trim()) {
       Alert.alert('Empty search', 'Please enter a search term');
       return;
     }
 
     setSearching(true);
-    // Simulate API call delay
-    setTimeout(() => {
-      // Filter mock results based on search query
-      const filtered = MOCK_SEARCH_RESULTS.filter(item =>
-        item.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        item.brand.toLowerCase().includes(searchQuery.toLowerCase())
-      );
-      setResults(filtered.length > 0 ? filtered : MOCK_SEARCH_RESULTS);
+    try {
+      const searchResults = await searchShoppingItems(searchQuery.trim());
+      setResults(searchResults);
+    } catch (error) {
+      Alert.alert('Search failed', error.message || 'Please try again');
+      setResults([]);
+    } finally {
       setSearching(false);
-    }, 500);
+    }
   }
 
   async function handleAddToWishlist(item) {
@@ -88,7 +50,11 @@ export default function SearchItemScreen({ navigation }) {
   }
 
   return (
-    <SafeAreaView style={[styles.safe, { paddingTop: insets.top, backgroundColor: theme.colors.grayBG || '#F6F7FB' }]}>
+    <LinearGradient
+      colors={['#FDF2F8', '#FCE7F3', '#FFFFFF']}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={[styles.safe, { paddingTop: insets.top }]}>
       <View style={styles.header}>
         <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
           <Ionicons name="arrow-back" size={24} color={theme.colors.text} />
@@ -166,11 +132,13 @@ export default function SearchItemScreen({ navigation }) {
           </Text>
         </View>
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: { flex: 1 },
   safe: { flex: 1 },
   header: {
     flexDirection: 'row',

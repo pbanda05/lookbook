@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React, { useState } from 'react';
 import { ActivityIndicator, Alert, Image, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
@@ -12,8 +13,8 @@ import { useTheme } from '../theme';
 export default function GenerateScreen() {
   const [vibe, setVibe] = useState('');
   const [generating, setGenerating] = useState(false);
-  const [generatedOutfit, setGeneratedOutfit] = useState(null);
-  const [saved, setSaved] = useState(false);
+  const [generatedOutfits, setGeneratedOutfits] = useState([]);
+  const [savedOutfits, setSavedOutfits] = useState(new Set());
   const theme = useTheme();
   const { items } = useCloset();
   const { saveOutfit } = useSavedOutfits();
@@ -30,27 +31,42 @@ export default function GenerateScreen() {
     }
 
     setGenerating(true);
-    setGeneratedOutfit(null);
+    setGeneratedOutfits([]);
+    setSavedOutfits(new Set());
 
     try {
-      // Call AI service to generate outfit
-      const aiResult = await generateOutfitWithAI(items, vibe.trim());
+      // Generate 3-5 outfit options
+      const numOutfits = Math.min(5, Math.max(3, Math.floor(items.length / 2)));
+      const outfitPromises = [];
       
-      // Get the selected items based on AI's indices
-      const selectedItems = aiResult.selectedItemIndices
-        .filter(index => index >= 0 && index < items.length)
-        .map(index => items[index]);
+      for (let i = 0; i < numOutfits; i++) {
+        outfitPromises.push(generateOutfitWithAI(items, vibe.trim()));
+      }
+      
+      const results = await Promise.all(outfitPromises);
+      
+      const outfits = results.map((aiResult, index) => {
+        const selectedItems = aiResult.selectedItemIndices
+          .filter(idx => idx >= 0 && idx < items.length)
+          .map(idx => items[idx]);
 
-      if (selectedItems.length === 0) {
-        throw new Error('AI did not select any valid items');
+        if (selectedItems.length === 0) {
+          return null;
+        }
+
+        return {
+          id: `outfit-${Date.now()}-${index}`,
+          items: selectedItems,
+          description: aiResult.description || `Outfit option ${index + 1}`,
+          reasoning: aiResult.reasoning || '',
+        };
+      }).filter(outfit => outfit !== null);
+
+      if (outfits.length === 0) {
+        throw new Error('Failed to generate any valid outfits');
       }
 
-      setGeneratedOutfit({
-        items: selectedItems,
-        description: aiResult.description,
-        reasoning: aiResult.reasoning,
-      });
-      setSaved(false); // Reset saved state when new outfit is generated
+      setGeneratedOutfits(outfits);
     } catch (error) {
       console.error('Outfit generation error:', error);
       
@@ -70,9 +86,26 @@ export default function GenerateScreen() {
     }
   }
 
+  async function handleSaveOutfit(outfit) {
+    try {
+      await saveOutfit({
+        ...outfit,
+        vibe: vibe.trim(),
+      });
+      setSavedOutfits(new Set([...savedOutfits, outfit.id]));
+      Alert.alert('Success', 'Outfit saved to favorites!');
+    } catch (error) {
+      Alert.alert('Error', 'Failed to save outfit');
+    }
+  }
+
   return (
-    <SafeScreen scroll>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <LinearGradient
+      colors={['#F0F9FF', '#E0F2FE', '#F0FDF4']}
+      style={styles.gradient}
+    >
+      <SafeScreen scroll>
+        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <Text style={[styles.header, { color: theme.colors.text }]}>
           Generate Outfit
         </Text>
@@ -126,68 +159,69 @@ export default function GenerateScreen() {
           </View>
         )}
 
-        {generatedOutfit && !generating && (
-          <View style={[styles.outfitContainer, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}>
-            <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
-              <Text style={[styles.outfitTitle, { color: theme.colors.text }]}>Your AI-Generated Outfit</Text>
-              <TouchableOpacity
-                onPress={async () => {
-                  if (!saved) {
-                    try {
-                      await saveOutfit({
-                        ...generatedOutfit,
-                        vibe: vibe.trim(),
-                      });
-                      setSaved(true);
-                      Alert.alert('Success', 'Outfit saved to favorites!');
-                    } catch (error) {
-                      Alert.alert('Error', 'Failed to save outfit');
-                    }
-                  }
-                }}
-                disabled={saved}
-                style={[styles.saveButton, saved && { opacity: 0.5 }]}
-              >
-                <Ionicons 
-                  name={saved ? "heart" : "heart-outline"} 
-                  size={20} 
-                  color={saved ? "#EF4444" : theme.colors.subtext} 
-                />
-                <Text style={[styles.saveButtonText, { color: saved ? "#EF4444" : theme.colors.subtext }]}>
-                  {saved ? 'Saved' : 'Save'}
-                </Text>
-              </TouchableOpacity>
-            </View>
-            <Text style={[styles.outfitDescription, { color: theme.colors.subtext }]}>
-              {generatedOutfit.description}
+        {generatedOutfits.length > 0 && !generating && (
+          <View style={styles.outfitsSection}>
+            <Text style={[styles.sectionTitle, { color: theme.colors.text }]}>
+              {generatedOutfits.length} Outfit Options
             </Text>
-            {generatedOutfit.reasoning && (
-              <Text style={[styles.outfitReasoning, { color: theme.colors.subtext }]}>
-                {generatedOutfit.reasoning}
-              </Text>
-            )}
-            <View style={styles.outfitItems}>
-              {generatedOutfit.items.map((item, index) => (
-                <View key={item.id} style={[styles.outfitItem, { borderColor: theme.colors.border }]}>
-                  {item.imageUri && (
-                    <Image source={{ uri: item.imageUri }} style={styles.outfitItemImage} />
-                  )}
-                  <Text style={[styles.outfitItemName, { color: theme.colors.text }]} numberOfLines={2}>
-                    {item.name}
+            {generatedOutfits.map((outfit) => {
+              const isSaved = savedOutfits.has(outfit.id);
+              return (
+                <View key={outfit.id} style={[styles.outfitContainer, { backgroundColor: theme.colors.white, borderColor: theme.colors.border }]}>
+                  <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 8 }}>
+                    <Text style={[styles.outfitTitle, { color: theme.colors.text }]}>Option {generatedOutfits.indexOf(outfit) + 1}</Text>
+                    <TouchableOpacity
+                      onPress={() => handleSaveOutfit(outfit)}
+                      disabled={isSaved}
+                      style={[styles.saveButton, isSaved && { opacity: 0.5 }]}
+                    >
+                      <Ionicons 
+                        name={isSaved ? "heart" : "heart-outline"} 
+                        size={20} 
+                        color={isSaved ? "#EF4444" : theme.colors.subtext} 
+                      />
+                      <Text style={[styles.saveButtonText, { color: isSaved ? "#EF4444" : theme.colors.subtext }]}>
+                        {isSaved ? 'Saved' : 'Save'}
+                      </Text>
+                    </TouchableOpacity>
+                  </View>
+                  <Text style={[styles.outfitDescription, { color: theme.colors.subtext }]}>
+                    {outfit.description}
                   </Text>
+                  {outfit.reasoning && (
+                    <Text style={[styles.outfitReasoning, { color: theme.colors.subtext }]}>
+                      {outfit.reasoning}
+                    </Text>
+                  )}
+                  <View style={styles.outfitItems}>
+                    {outfit.items.map((item, index) => (
+                      <View key={item.id || index} style={[styles.outfitItem, { borderColor: theme.colors.border }]}>
+                        {item.imageUri && (
+                          <Image source={{ uri: item.imageUri }} style={styles.outfitItemImage} />
+                        )}
+                        <Text style={[styles.outfitItemName, { color: theme.colors.text }]} numberOfLines={2}>
+                          {item.name}
+                        </Text>
+                      </View>
+                    ))}
+                  </View>
                 </View>
-              ))}
-            </View>
+              );
+            })}
           </View>
         )}
-      </ScrollView>
-    </SafeScreen>
+        </ScrollView>
+      </SafeScreen>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: { flex: 1 },
   container: { flex: 1 },
-  contentContainer: { padding: 16, gap: 12 },
+  contentContainer: { padding: 16, gap: 12, paddingBottom: 100 },
+  outfitsSection: { marginTop: 16, gap: 16 },
+  sectionTitle: { fontSize: 20, fontWeight: '800', marginBottom: 8 },
   header: { alignSelf: 'center', fontSize: 22, fontWeight: '800', marginBottom: 12 },
   avatar: { alignItems: 'center', marginTop: 6 },
   prompt: { marginTop: 12, fontWeight: '600' },
@@ -207,10 +241,10 @@ const styles = StyleSheet.create({
   },
   loadingText: { fontSize: 16 },
   outfitContainer: {
-    marginTop: 24,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     padding: 16,
+    marginBottom: 16,
   },
   outfitTitle: { fontSize: 20, fontWeight: '800' },
   saveButton: {

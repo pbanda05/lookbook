@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import { signOut } from 'firebase/auth';
 import React, { useState } from 'react';
 import { Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
@@ -96,8 +97,12 @@ export default function ProfileScreen({ navigation }) {
   }
 
   return (
-    <SafeScreen scroll>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+    <LinearGradient
+      colors={['#E0E7FF', '#DDD6FE', '#F3F4F6']}
+      style={styles.gradient}
+    >
+      <SafeScreen scroll>
+        <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
         <Text style={[styles.header, { color: theme.colors.text }]}>Profile</Text>
 
         {/* Real-time Stats */}
@@ -249,12 +254,14 @@ export default function ProfileScreen({ navigation }) {
           <Ionicons name="log-out-outline" size={18} color={theme.colors.subtext} />
           <Text style={{ marginLeft: 6, color: theme.colors.text, fontWeight: '600' }}>Logout</Text>
         </TouchableOpacity>
-      </ScrollView>
-    </SafeScreen>
+        </ScrollView>
+      </SafeScreen>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
+  gradient: { flex: 1 },
   container: { flex: 1 },
   contentContainer: { padding: 16, gap: 12, paddingBottom: 32 },
   header: { fontSize: 28, fontWeight: '800', marginBottom: 8 },

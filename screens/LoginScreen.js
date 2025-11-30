@@ -75,17 +75,18 @@ export default function LoginScreen({ navigation }) {
         <Text style={styles.btnText}>{busy ? 'Signing in…' : 'Sign in'}</Text>
       </TouchableOpacity>
 
-      <TouchableOpacity 
-        onPress={() => navigation.replace('SignUp')} 
-        style={{ marginTop: 14 }}
-      >
-        <Text style={{ color: '#6B7280', textAlign: 'center' }}>
-          Don't have an account? Create one
-        </Text>
-      </TouchableOpacity>
+      <View style={styles.linkContainer}>
+        <Text style={styles.linkText}>Don't have an account? </Text>
+        <TouchableOpacity onPress={() => navigation.replace('SignUp')}>
+          <Text style={styles.linkButton}>Create one</Text>
+        </TouchableOpacity>
+      </View>
 
-      <TouchableOpacity onPress={() => navigation.replace('Welcome')} style={{ marginTop: 8 }}>
-        <Text style={{ color: '#6B7280', textAlign: 'center' }}>Back to Welcome</Text>
+      <TouchableOpacity 
+        onPress={() => navigation.replace('Welcome')} 
+        style={styles.backButton}
+      >
+        <Text style={styles.backButtonText}>Back to Welcome</Text>
       </TouchableOpacity>
     </SafeAreaView>
   );
@@ -100,4 +101,23 @@ const styles = StyleSheet.create({
   },
   btn: { backgroundColor: '#6C63FF', paddingVertical: 14, borderRadius: 12, alignItems: 'center', marginTop: 4 },
   btnText: { color: 'white', fontWeight: '700', fontSize: 16 },
+  linkContainer: {
+    flexDirection: 'row',
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 14,
+  },
+  linkText: { color: '#6B7280', fontSize: 14 },
+  linkButton: { color: '#3B82F6', fontWeight: '600', fontSize: 14 },
+  backButton: {
+    marginTop: 12,
+    backgroundColor: '#F3F4F6',
+    paddingVertical: 12,
+    paddingHorizontal: 20,
+    borderRadius: 20,
+    alignSelf: 'center',
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  backButtonText: { color: '#6B7280', textAlign: 'center', fontWeight: '600', fontSize: 14 },
 });

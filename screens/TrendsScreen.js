@@ -1,71 +1,153 @@
-import React from 'react';
-import { ScrollView, StyleSheet, Text, View } from 'react-native';
+import { LinearGradient } from 'expo-linear-gradient';
+import React, { useState } from 'react';
+import { Image, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import SafeScreen from '../components/SafeScreen';
 import { useTheme } from '../theme';
 
-function TrendCard({ title, theme }) {
+const TREND_DATA = {
+  All: [
+    { id: '1', name: 'Mocha Mousse Leather Biker Jacket', category: 'Tops', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400' },
+    { id: '2', name: 'Faded Terracotta Wide-Leg Trousers', category: 'Bottoms', image: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=400' },
+    { id: '3', name: 'Suede Ankle Boots in Sand', category: 'Shoes', image: 'https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=400' },
+    { id: '4', name: 'Rimless Gradient-Tinted Sunglasses', category: 'Accessories', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400' },
+    { id: '5', name: 'Oversized Denim Shirt', category: 'Tops', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400' },
+    { id: '6', name: 'Cargo Pants with Utility Pockets', category: 'Bottoms', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400' },
+    { id: '7', name: 'Platform Sneakers', category: 'Shoes', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400' },
+    { id: '8', name: 'Chain Link Belt', category: 'Accessories', image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400' },
+  ],
+  Tops: [
+    { id: '1', name: 'Mocha Mousse Leather Biker Jacket', category: 'Tops', image: 'https://images.unsplash.com/photo-1551028719-00167b16eac5?w=400' },
+    { id: '5', name: 'Oversized Denim Shirt', category: 'Tops', image: 'https://images.unsplash.com/photo-1591047139829-d91aecb6caea?w=400' },
+    { id: '9', name: 'Cropped Knit Sweater', category: 'Tops', image: 'https://images.unsplash.com/photo-1576566588028-4147f3842f27?w=400' },
+    { id: '10', name: 'Silk Blouse with Bow', category: 'Tops', image: 'https://images.unsplash.com/photo-1594938291221-94f313d0a4cd?w=400' },
+  ],
+  Bottoms: [
+    { id: '2', name: 'Faded Terracotta Wide-Leg Trousers', category: 'Bottoms', image: 'https://images.unsplash.com/photo-1594633313593-bab3825d0caf?w=400' },
+    { id: '6', name: 'Cargo Pants with Utility Pockets', category: 'Bottoms', image: 'https://images.unsplash.com/photo-1542272604-787c3835535d?w=400' },
+    { id: '11', name: 'Pleated Midi Skirt', category: 'Bottoms', image: 'https://images.unsplash.com/photo-1595777457583-95e059d581b8?w=400' },
+    { id: '12', name: 'High-Waisted Wide Leg Jeans', category: 'Bottoms', image: 'https://images.unsplash.com/photo-1519741497674-611481863552?w=400' },
+  ],
+  Shoes: [
+    { id: '3', name: 'Suede Ankle Boots in Sand', category: 'Shoes', image: 'https://images.unsplash.com/photo-1544966503-7cc5ac882d5f?w=400' },
+    { id: '7', name: 'Platform Sneakers', category: 'Shoes', image: 'https://images.unsplash.com/photo-1542291026-7eec264c27ff?w=400' },
+    { id: '13', name: 'Mary Jane Flats', category: 'Shoes', image: 'https://images.unsplash.com/photo-1460353581641-37baddab0fa2?w=400' },
+    { id: '14', name: 'Chunky Heeled Loafers', category: 'Shoes', image: 'https://images.unsplash.com/photo-1549298916-b41d501d3772?w=400' },
+  ],
+  Accessories: [
+    { id: '4', name: 'Rimless Gradient-Tinted Sunglasses', category: 'Accessories', image: 'https://images.unsplash.com/photo-1511499767150-a48a237f0083?w=400' },
+    { id: '8', name: 'Chain Link Belt', category: 'Accessories', image: 'https://images.unsplash.com/photo-1611652022419-a9419f74343d?w=400' },
+    { id: '15', name: 'Structured Tote Bag', category: 'Accessories', image: 'https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=400' },
+    { id: '16', name: 'Oversized Bucket Hat', category: 'Accessories', image: 'https://images.unsplash.com/photo-1588850561407-ed78c282e89b?w=400' },
+  ],
+};
+
+function TrendCard({ item, theme }) {
   return (
     <View style={[
       styles.card,
       {
-        backgroundColor: theme.colors.grayBG,
-        borderColor: theme.colors.primary
+        backgroundColor: theme.colors.white,
+        borderColor: theme.colors.border
       }
     ]}>
-      <Text style={{ color: theme.colors.text, textAlign: 'center' }}>{title}</Text>
+      {item.image && (
+        <Image source={{ uri: item.image }} style={styles.cardImage} />
+      )}
+      <Text style={[styles.cardText, { color: theme.colors.text }]} numberOfLines={2}>
+        {item.name}
+      </Text>
     </View>
   );
 }
 
 export default function TrendsScreen() {
   const theme = useTheme();
+  const [selectedCategory, setSelectedCategory] = useState('All');
+  const categories = ['All', 'Tops', 'Bottoms', 'Shoes', 'Accessories'];
+  const displayedTrends = TREND_DATA[selectedCategory] || TREND_DATA.All;
 
   return (
-    <SafeScreen scroll>
-      <ScrollView style={styles.container} contentContainerStyle={{ paddingBottom: 120 }}>
-        <Text style={[styles.header, { color: theme.colors.text }]}>Trends</Text>
+    <LinearGradient
+      colors={['#FEF3C7', '#FDE68A', '#FEF9E7']}
+      style={styles.gradient}
+    >
+      <SafeScreen>
+        <View style={styles.container}>
+          <Text style={[styles.header, { color: '#1F2937' }]}>Trends</Text>
 
-        <View style={styles.categoryRow}>
-          {['All','Tops','Bottoms','Shoes','Accessories'].map((c, i) => (
-            <View
-              key={i}
-              style={[
-                styles.chip,
-                {
-                  backgroundColor: theme.colors.white,
-                  borderColor: i === 0 ? theme.colors.primary : theme.colors.border,
-                  shadowColor: i === 0 ? theme.colors.primary : 'transparent',
-                  shadowOpacity: i === 0 ? 0.1 : 0,
-                  shadowRadius: i === 0 ? 6 : 0,
-                }
-              ]}
-            >
-              <Text style={{ color: i === 0 ? theme.colors.primary : theme.colors.text }}>{c}</Text>
+          <View style={styles.categoryRow}>
+            {categories.map((category) => {
+              const isSelected = selectedCategory === category;
+              return (
+                <TouchableOpacity
+                  key={category}
+                  onPress={() => setSelectedCategory(category)}
+                  style={[
+                    styles.chip,
+                    {
+                      backgroundColor: isSelected ? theme.colors.primary : theme.colors.white,
+                      borderColor: isSelected ? theme.colors.primary : theme.colors.border,
+                      shadowColor: isSelected ? theme.colors.primary : 'transparent',
+                      shadowOpacity: isSelected ? 0.2 : 0,
+                      shadowRadius: isSelected ? 8 : 0,
+                      elevation: isSelected ? 4 : 0,
+                    }
+                  ]}
+                >
+                  <Text style={{ 
+                    color: isSelected ? '#fff' : theme.colors.text,
+                    fontWeight: isSelected ? '700' : '500',
+                  }}>
+                    {category}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </View>
+
+          <Text style={[styles.section, { color: '#1F2937' }]}>
+            Trending {selectedCategory === 'All' ? 'Now' : selectedCategory}
+          </Text>
+
+          <ScrollView 
+            style={styles.scrollView}
+            contentContainerStyle={styles.gridContainer}
+            showsVerticalScrollIndicator={false}
+          >
+            <View style={styles.grid}>
+              {displayedTrends.map((item) => (
+                <TrendCard key={item.id} item={item} theme={theme} />
+              ))}
             </View>
-          ))}
+          </ScrollView>
         </View>
-
-        <Text style={[styles.section, { color: theme.colors.text }]}>Trending Now</Text>
-
-        <View style={styles.grid}>
-          {[
-            'Mocha Mousse Leather Biker Jacket',
-            'Faded Terracotta Wide-Leg Trousers',
-            'Suede Ankle Boots in Sand',
-            'Rimless Gradient-Tinted Sunglasses',
-          ].map((t, i) => <TrendCard key={i} title={t} theme={theme} />)}
-        </View>
-      </ScrollView>
-    </SafeScreen>
+      </SafeScreen>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1 },
-  header: { alignSelf: 'center', fontSize: 22, fontWeight: '800', marginBottom: 8 },
-  categoryRow: { flexDirection: 'row', gap: 10, marginVertical: 8 },
-  chip: { paddingVertical: 8, paddingHorizontal: 14, borderRadius: 999, borderWidth: 1 },
-  section: { fontWeight: '800', fontSize: 18, textAlign: 'center', marginVertical: 10 },
+  gradient: { flex: 1 },
+  container: { flex: 1, padding: 16 },
+  scrollView: { flex: 1 },
+  gridContainer: { paddingBottom: 120 },
+  header: { alignSelf: 'center', fontSize: 28, fontWeight: '800', marginBottom: 12 },
+  categoryRow: { flexDirection: 'row', gap: 10, marginVertical: 12, flexWrap: 'wrap' },
+  chip: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 20, borderWidth: 1.5 },
+  section: { fontWeight: '800', fontSize: 20, textAlign: 'center', marginVertical: 16 },
   grid: { flexDirection: 'row', flexWrap: 'wrap', gap: 12 },
-  card: { width: '47%', height: 140, borderRadius: 12, borderWidth: 1, justifyContent: 'center', alignItems: 'center' },
+  card: { 
+    width: '47%', 
+    height: 180, 
+    borderRadius: 16, 
+    borderWidth: 1, 
+    overflow: 'hidden',
+  },
+  cardImage: { width: '100%', height: 120 },
+  cardText: { 
+    padding: 10, 
+    fontSize: 12, 
+    fontWeight: '600',
+    textAlign: 'center',
+  },
 });

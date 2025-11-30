@@ -1,4 +1,5 @@
 import { Ionicons } from '@expo/vector-icons';
+import { LinearGradient } from 'expo-linear-gradient';
 import React from 'react';
 import { FlatList, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
@@ -10,7 +11,11 @@ export default function HomeScreen({ navigation }) {
   const { items } = useCloset();
 
   return (
-    <SafeAreaView style={[styles.safe, { paddingTop: insets.top + 4 }]}>
+    <LinearGradient
+      colors={['#FFF5F5', '#FFF0F5', '#FFFFFF']}
+      style={styles.gradient}
+    >
+      <SafeAreaView style={[styles.safe, { paddingTop: insets.top + 4 }]}>
       <View style={styles.header}>
         <Text style={styles.h1}>Home</Text>
       </View>
@@ -45,12 +50,14 @@ export default function HomeScreen({ navigation }) {
           )}
         />
       )}
-    </SafeAreaView>
+      </SafeAreaView>
+    </LinearGradient>
   );
 }
 
 const styles = StyleSheet.create({
-  safe: { flex: 1, backgroundColor: '#fff' },
+  gradient: { flex: 1 },
+  safe: { flex: 1 },
   header: { paddingHorizontal: 16, paddingBottom: 8 },
   h1: { fontSize: 28, fontWeight: '800' },
   section: { marginTop: 8, marginBottom: 8, fontSize: 18, fontWeight: '700', paddingHorizontal: 16 },
