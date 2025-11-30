@@ -30,7 +30,20 @@ export default function LoginScreen({ navigation }) {
       if (error.message?.includes('cancelled')) {
         return; // User cancelled, don't show error
       }
-      Alert.alert('Sign in failed', 'Failed to sign in with Google. Please try again.');
+      
+      let errorMessage = 'Failed to sign in with Google. Please try again.';
+      if (error.message?.includes('not configured') || error.message?.includes('Client ID')) {
+        errorMessage = error.message;
+      } else if (error.message?.includes('404') || error.message?.includes('not found')) {
+        errorMessage = 'Google OAuth Client ID not configured correctly.\n\n' +
+          'Please:\n' +
+          '1. Go to Firebase Console → Project Settings → Your apps → Web app\n' +
+          '2. Copy the OAuth client ID\n' +
+          '3. Add EXPO_PUBLIC_GOOGLE_CLIENT_ID=your_client_id to .env file\n' +
+          '4. Restart your Expo server';
+      }
+      
+      Alert.alert('Sign in failed', errorMessage);
     } finally {
       setBusy(false);
     }

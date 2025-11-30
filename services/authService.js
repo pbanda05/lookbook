@@ -15,34 +15,53 @@ WebBrowser.maybeCompleteAuthSession();
 
 // Google OAuth Configuration
 // Get from Firebase Console -> Project Settings -> Your apps -> Web app config
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '897402009993-xxxxxxxxxxxxx.apps.googleusercontent.com';
+// The Web client ID (not iOS/Android client ID)
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
 
 // Google Sign In
 export async function signInWithGoogle() {
   try {
-    // Create OAuth request
-    const discovery = {
-      authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
-      tokenEndpoint: 'https://www.googleapis.com/oauth2/v4/token',
-      revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
-    };
+    // Check if client ID is configured
+    if (!GOOGLE_CLIENT_ID || GOOGLE_CLIENT_ID.includes('xxxxxxxxxxxxx')) {
+      throw new Error(
+        'Google OAuth Client ID not configured. Please:\n' +
+        '1. Go to Firebase Console → Project Settings → Your apps → Web app\n' +
+        '2. Copy the OAuth client ID\n' +
+        '3. Add EXPO_PUBLIC_GOOGLE_CLIENT_ID=your_client_id to .env file\n' +
+        '4. Restart your Expo server'
+      );
+    }
+
+    // Create OAuth request with proper configuration
+    const redirectUri = AuthSession.makeRedirectUri({
+      useProxy: true,
+      scheme: 'lookbook',
+    });
+
+    console.log('Google OAuth redirect URI:', redirectUri);
 
     const request = new AuthSession.AuthRequest({
       clientId: GOOGLE_CLIENT_ID,
       scopes: ['openid', 'profile', 'email'],
       responseType: AuthSession.ResponseType.IdToken,
-      redirectUri: AuthSession.makeRedirectUri({
-        useProxy: true,
-        scheme: 'lookbook',
-      }),
+      redirectUri: redirectUri,
+      additionalParameters: {},
+      extraParams: {},
     });
+
+    // Use Google's discovery document
+    const discovery = {
+      authorizationEndpoint: 'https://accounts.google.com/o/oauth2/v2/auth',
+      tokenEndpoint: 'https://oauth2.googleapis.com/token',
+      revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
+    };
 
     const result = await request.promptAsync(discovery);
 
     if (result.type === 'success') {
       const { id_token } = result.params;
       if (!id_token) {
-        throw new Error('No ID token received from Google');
+        throw new Error('No ID token received from Google. Please check your OAuth configuration.');
       }
       const credential = GoogleAuthProvider.credential(id_token);
       const userCredential = await signInWithCredential(auth, credential);
@@ -50,7 +69,7 @@ export async function signInWithGoogle() {
     } else if (result.type === 'cancel') {
       throw new Error('Google sign-in was cancelled');
     } else {
-      throw new Error('Google sign-in failed');
+      throw new Error(`Google sign-in failed: ${result.type}`);
     }
   } catch (error) {
     console.error('Google sign-in error:', error);
