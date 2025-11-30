@@ -80,6 +80,12 @@ export async function signInWithGoogle() {
 // Apple Sign In
 export async function signInWithApple() {
   try {
+    // Check if Apple Authentication is available
+    const isAvailable = await AppleAuthentication.isAvailableAsync();
+    if (!isAvailable) {
+      throw new Error('Apple Sign-In is not available on this device. It only works on iOS devices with iOS 13+.');
+    }
+
     const credential = await AppleAuthentication.signInAsync({
       requestedScopes: [
         AppleAuthentication.AppleAuthenticationScope.FULL_NAME,
@@ -91,7 +97,7 @@ export async function signInWithApple() {
       throw new Error('Apple Sign-In failed - no identity token');
     }
 
-    const { identityToken, authorizationCode } = credential;
+    const { identityToken } = credential;
     
     // Create Firebase credential
     const provider = new OAuthProvider('apple.com');
@@ -106,15 +112,35 @@ export async function signInWithApple() {
     if (credential.fullName?.givenName || credential.fullName?.familyName) {
       const displayName = `${credential.fullName.givenName || ''} ${credential.fullName.familyName || ''}`.trim();
       if (displayName) {
-        await userCredential.user.updateProfile({ displayName });
+        try {
+          await userCredential.user.updateProfile({ displayName });
+        } catch (updateError) {
+          console.log('Could not update display name:', updateError);
+          // Continue even if display name update fails
+        }
       }
     }
 
     return userCredential;
   } catch (error) {
-    if (error.code === 'ERR_CANCELED') {
+    if (error.code === 'ERR_CANCELED' || error.message?.includes('cancelled')) {
       throw new Error('Apple sign-in was cancelled');
     }
+    
+    // Check for Firebase operation-not-allowed error
+    if (error.code === 'auth/operation-not-allowed' || error.message?.includes('operation-not-allowed')) {
+      throw new Error(
+        'Apple Sign-In is not enabled in Firebase.\n\n' +
+        'Please:\n' +
+        '1. Go to Firebase Console → Authentication → Sign-in method\n' +
+        '2. Click on "Apple"\n' +
+        '3. Toggle "Enable" to ON\n' +
+        '4. Click "Save"\n' +
+        '5. Wait 1-2 minutes for changes to propagate\n' +
+        '6. Try again'
+      );
+    }
+    
     console.error('Apple sign-in error:', error);
     throw error;
   }
