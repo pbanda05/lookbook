@@ -60,7 +60,19 @@ export default function LoginScreen({ navigation }) {
       if (error.message?.includes('cancelled')) {
         return; // User cancelled, don't show error
       }
-      Alert.alert('Sign in failed', 'Failed to sign in with Apple. Please try again.');
+      
+      let errorMessage = 'Failed to sign in with Apple. Please try again.';
+      if (error.code === 'auth/operation-not-allowed' || error.message?.includes('operation-not-allowed')) {
+        errorMessage = 'Apple Sign-In is not enabled in Firebase.\n\n' +
+          'Please:\n' +
+          '1. Go to Firebase Console → Authentication → Sign-in method\n' +
+          '2. Click on "Apple"\n' +
+          '3. Toggle "Enable" to ON\n' +
+          '4. Click "Save"\n' +
+          '5. Try again';
+      }
+      
+      Alert.alert('Sign in failed', errorMessage);
     } finally {
       setBusy(false);
     }

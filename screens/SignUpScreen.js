@@ -31,7 +31,20 @@ export default function SignUpScreen({ navigation }) {
       if (error.message?.includes('cancelled')) {
         return;
       }
-      Alert.alert('Sign up failed', 'Failed to sign up with Google. Please try again.');
+      
+      let errorMessage = 'Failed to sign up with Google. Please try again.';
+      if (error.message?.includes('not configured') || error.message?.includes('Client ID')) {
+        errorMessage = error.message;
+      } else if (error.message?.includes('404') || error.message?.includes('not found')) {
+        errorMessage = 'Google OAuth Client ID not configured correctly.\n\n' +
+          'Please:\n' +
+          '1. Go to Firebase Console → Project Settings → Your apps → Web app\n' +
+          '2. Copy the OAuth client ID\n' +
+          '3. Add EXPO_PUBLIC_GOOGLE_CLIENT_ID=your_client_id to .env file\n' +
+          '4. Restart your Expo server';
+      }
+      
+      Alert.alert('Sign up failed', errorMessage);
     } finally {
       setBusy(false);
     }
@@ -48,7 +61,19 @@ export default function SignUpScreen({ navigation }) {
       if (error.message?.includes('cancelled')) {
         return;
       }
-      Alert.alert('Sign up failed', 'Failed to sign up with Apple. Please try again.');
+      
+      let errorMessage = 'Failed to sign up with Apple. Please try again.';
+      if (error.code === 'auth/operation-not-allowed' || error.message?.includes('operation-not-allowed')) {
+        errorMessage = 'Apple Sign-In is not enabled in Firebase.\n\n' +
+          'Please:\n' +
+          '1. Go to Firebase Console → Authentication → Sign-in method\n' +
+          '2. Click on "Apple"\n' +
+          '3. Toggle "Enable" to ON\n' +
+          '4. Click "Save"\n' +
+          '5. Try again';
+      }
+      
+      Alert.alert('Sign up failed', errorMessage);
     } finally {
       setBusy(false);
     }
