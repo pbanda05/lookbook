@@ -16,7 +16,7 @@ WebBrowser.maybeCompleteAuthSession();
 // Google OAuth Configuration
 // Get from Firebase Console -> Project Settings -> Your apps -> Web app config
 // The Web client ID (not iOS/Android client ID)
-const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_ID = process.env.EXPO_PUBLIC_GOOGLE_CLIENT_ID || '897402009993-sstpujcp2k0eie5ls6pdlgp9ia7jrpa2.apps.googleusercontent.com';
 
 // Google Sign In
 export async function signInWithGoogle() {
