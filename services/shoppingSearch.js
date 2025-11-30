@@ -2,7 +2,7 @@
 // Uses Google Custom Search API for real product search
 // To use: Set EXPO_PUBLIC_GOOGLE_API_KEY and EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID in your .env file
 
-const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY;
+const GOOGLE_API_KEY = process.env.EXPO_PUBLIC_GOOGLE_API_KEY || 'AIzaSyAan-A74t18rUSxGzYxBuF-60su_xJs-7Q';
 const GOOGLE_SEARCH_ENGINE_ID = process.env.EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID;
 const GOOGLE_CUSTOM_SEARCH_URL = 'https://www.googleapis.com/customsearch/v1';
 
@@ -51,8 +51,12 @@ function extractPrice(text) {
 
 // Real Google Custom Search implementation
 async function searchWithGoogle(query) {
-  if (!GOOGLE_API_KEY || !GOOGLE_SEARCH_ENGINE_ID) {
-    throw new Error('Google API credentials not configured');
+  if (!GOOGLE_API_KEY) {
+    throw new Error('Google API key not configured');
+  }
+  
+  if (!GOOGLE_SEARCH_ENGINE_ID) {
+    throw new Error('Google Search Engine ID (CX) is required. Please create a Custom Search Engine at https://cse.google.com/cse/ and add EXPO_PUBLIC_GOOGLE_SEARCH_ENGINE_ID to your .env file');
   }
 
   try {
