@@ -33,6 +33,7 @@ export async function signInWithGoogle() {
     }
 
     // Create OAuth request with proper configuration
+    // Use code flow (not id_token) to avoid PKCE issues
     const redirectUri = AuthSession.makeRedirectUri({
       useProxy: true,
       scheme: 'lookbook',
@@ -43,10 +44,9 @@ export async function signInWithGoogle() {
     const request = new AuthSession.AuthRequest({
       clientId: GOOGLE_CLIENT_ID,
       scopes: ['openid', 'profile', 'email'],
-      responseType: AuthSession.ResponseType.IdToken,
+      responseType: AuthSession.ResponseType.Code, // Use code flow instead of id_token
       redirectUri: redirectUri,
-      additionalParameters: {},
-      extraParams: {},
+      usePKCE: false, // Disable PKCE to avoid the error
     });
 
     // Use Google's discovery document
@@ -59,11 +59,32 @@ export async function signInWithGoogle() {
     const result = await request.promptAsync(discovery);
 
     if (result.type === 'success') {
-      const { id_token } = result.params;
-      if (!id_token) {
-        throw new Error('No ID token received from Google. Please check your OAuth configuration.');
+      const { code } = result.params;
+      if (!code) {
+        throw new Error('No authorization code received from Google.');
       }
-      const credential = GoogleAuthProvider.credential(id_token);
+
+      // Exchange code for ID token
+      const tokenResponse = await fetch(discovery.tokenEndpoint, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        },
+        body: new URLSearchParams({
+          client_id: GOOGLE_CLIENT_ID,
+          code: code,
+          grant_type: 'authorization_code',
+          redirect_uri: redirectUri,
+        }).toString(),
+      });
+
+      const tokenData = await tokenResponse.json();
+      
+      if (!tokenData.id_token) {
+        throw new Error('Failed to exchange code for ID token.');
+      }
+
+      const credential = GoogleAuthProvider.credential(tokenData.id_token);
       const userCredential = await signInWithCredential(auth, credential);
       return userCredential;
     } else if (result.type === 'cancel') {
