@@ -16,8 +16,7 @@ export default function SafeScreen({ children, scroll = false, style }) {
         scroll
           ? [{
               paddingTop: insets.top + 8,
-              paddingBottom: insets.bottom + 90,
-              minHeight: '100%',
+              paddingBottom: insets.bottom + 20,
             }]
           : undefined
       }
@@ -27,7 +26,7 @@ export default function SafeScreen({ children, scroll = false, style }) {
           backgroundColor: theme.colors.grayBG || '#F7F7FB', // ✅ safe fallback
           paddingHorizontal: 20,
           paddingTop: scroll ? 0 : insets.top + 8,
-          paddingBottom: scroll ? 0 : insets.bottom + 90,
+          paddingBottom: scroll ? 0 : insets.bottom + 20,
         },
         style
       ]}

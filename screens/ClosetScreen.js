@@ -71,6 +71,7 @@ export default function ClosetScreen({ navigation }) {
                 numColumns={2}
                 columnWrapperStyle={styles.row}
                 contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
                   <View style={[styles.itemCard, { borderColor: '#E5E7EB' }]}>
                     {item.imageUri && (
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center' },
   title: { fontSize: 18, fontWeight: '700', marginTop: 12 },
   caption: { marginTop: 4 },
-  listContent: { padding: 16, paddingTop: 0 },
+  listContent: { padding: 16, paddingTop: 0, paddingBottom: 20 },
   row: { gap: 12, marginBottom: 12 },
   itemCard: {
     flex: 1,

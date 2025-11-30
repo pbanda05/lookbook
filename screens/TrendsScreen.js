@@ -130,7 +130,7 @@ const styles = StyleSheet.create({
   gradient: { flex: 1 },
   container: { flex: 1, padding: 16 },
   scrollView: { flex: 1 },
-  gridContainer: { paddingBottom: 120 },
+  gridContainer: { paddingBottom: 20 },
   header: { alignSelf: 'center', fontSize: 28, fontWeight: '800', marginBottom: 12 },
   categoryRow: { flexDirection: 'row', gap: 10, marginVertical: 12, flexWrap: 'wrap' },
   chip: { paddingVertical: 10, paddingHorizontal: 18, borderRadius: 20, borderWidth: 1.5 },

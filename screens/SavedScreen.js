@@ -87,7 +87,7 @@ const styles = StyleSheet.create({
   empty: { flex: 1, alignItems: 'center', justifyContent: 'center', paddingVertical: 60, minHeight: 300 },
   title: { fontWeight: '700', marginTop: 10, fontSize: 18 },
   caption: { marginTop: 4, fontSize: 14 },
-  outfitsGrid: { gap: 12, paddingBottom: 100 },
+  outfitsGrid: { gap: 12, paddingBottom: 20 },
   outfitCard: {
     borderRadius: 16,
     borderWidth: 1,

@@ -67,6 +67,7 @@ export default function WishListScreen({ navigation }) {
                 data={filteredItems}
                 keyExtractor={(item) => item.id}
                 contentContainerStyle={styles.listContent}
+                showsVerticalScrollIndicator={false}
                 renderItem={({ item }) => (
                   <View style={styles.itemCard}>
                     {item.imageUri && (
@@ -107,7 +108,7 @@ export default function WishListScreen({ navigation }) {
 const styles = StyleSheet.create({
   gradient: { flex: 1 },
   safe: { flex: 1 },
-  wrap: { flex: 1, padding: 20, paddingBottom: 100 },
+  wrap: { flex: 1, padding: 20, paddingBottom: 20 },
   title: { fontSize: 34, fontWeight: '800', marginBottom: 12, color: '#1F2937' },
   search: { backgroundColor: 'white', borderRadius: 14, padding: 12, borderWidth: 1, borderColor: '#E5E7EB', marginBottom: 12 },
   addButtonContainer: { marginBottom: 12 },
