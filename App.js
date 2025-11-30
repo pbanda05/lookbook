@@ -5,13 +5,19 @@ import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import React from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
+// contexts
+import { ClosetProvider } from './context/ClosetContext';
+import { WishlistProvider } from './context/WishlistContext';
+
 // screens
+import AddItemScreen from './screens/AddItemScreen.js';
 import ClosetScreen from './screens/ClosetScreen.js';
 import GenerateScreen from './screens/GenerateScreen.js';
 import HomeScreen from './screens/HomeScreen.js';
 import LoginScreen from './screens/LoginScreen.js';
 import ProfileScreen from './screens/ProfileScreen.js';
 import SavedScreen from './screens/SavedScreen.js';
+import SearchItemScreen from './screens/SearchItemScreen.js';
 import TrendsScreen from './screens/TrendsScreen.js';
 import WelcomeScreen from './screens/WelcomeScreen.js';
 import WishListScreen from './screens/WishListScreen.js'; // <- exact case + .js
@@ -57,13 +63,19 @@ function MainTabs() {
 export default function App() {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
-        <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
-          <Stack.Screen name="Welcome" component={WelcomeScreen} />
-          <Stack.Screen name="Login" component={LoginScreen} />
-          <Stack.Screen name="MainTabs" component={MainTabs} />
-        </Stack.Navigator>
-      </NavigationContainer>
+      <ClosetProvider>
+        <WishlistProvider>
+          <NavigationContainer>
+            <Stack.Navigator screenOptions={{ headerShown: false }} initialRouteName="Welcome">
+              <Stack.Screen name="Welcome" component={WelcomeScreen} />
+              <Stack.Screen name="Login" component={LoginScreen} />
+              <Stack.Screen name="MainTabs" component={MainTabs} />
+              <Stack.Screen name="AddItem" component={AddItemScreen} />
+              <Stack.Screen name="SearchItem" component={SearchItemScreen} />
+            </Stack.Navigator>
+          </NavigationContainer>
+        </WishlistProvider>
+      </ClosetProvider>
     </SafeAreaProvider>
   );
 }
