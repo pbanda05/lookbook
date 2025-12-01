@@ -4,7 +4,9 @@ import * as AuthSession from 'expo-auth-session';
 import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
 import {
+  fetchSignInMethodsForEmail,
   GoogleAuthProvider,
+  linkWithCredential,
   OAuthProvider,
   signInAnonymously,
   signInWithCredential
@@ -31,6 +33,14 @@ export async function signInWithGoogle() {
         '3. Add EXPO_PUBLIC_GOOGLE_CLIENT_ID=your_client_id to .env file\n' +
         '4. Restart your Expo server'
       );
+    }
+
+    // If user is already signed in, check if we should link accounts or sign out first
+    if (auth.currentUser) {
+      const currentEmail = auth.currentUser.email;
+      console.log('User already signed in with email:', currentEmail);
+      // We'll handle account linking after OAuth completes
+      // For now, continue with OAuth flow - we'll link the account after
     }
 
     // Create OAuth request with proper configuration
@@ -75,11 +85,26 @@ export async function signInWithGoogle() {
     // promptAsync will use the redirectUri we set in the AuthRequest
     const result = await request.promptAsync(discovery);
 
+    console.log('OAuth result type:', result.type);
+    console.log('OAuth result params:', result.params);
+    
     if (result.type === 'success') {
-      const { code } = result.params;
+      const { code, error, error_description } = result.params;
+      
+      // Check for errors in the response (sometimes OAuth errors come in success response)
+      if (error) {
+        console.error('OAuth error in response:', error, error_description);
+        throw new Error(
+          `Google OAuth error: ${error}${error_description ? '\n' + error_description : ''}`
+        );
+      }
+      
       if (!code) {
+        console.error('No authorization code in response. Params:', result.params);
         throw new Error('No authorization code received from Google.');
       }
+      
+      console.log('Received authorization code, exchanging for token...');
 
       // Exchange code for ID token using PKCE
       // Get the code verifier from the request
@@ -101,22 +126,174 @@ export async function signInWithGoogle() {
 
       if (!tokenResponse.ok) {
         const errorText = await tokenResponse.text();
+        console.error('Token exchange failed. Status:', tokenResponse.status, 'Response:', errorText);
         throw new Error(`Token exchange failed: ${errorText}`);
       }
+      
+      console.log('Token exchange successful');
 
       const tokenData = await tokenResponse.json();
       
       if (!tokenData.id_token) {
+        console.error('Token exchange response:', tokenData);
         throw new Error('Failed to exchange code for ID token. Response: ' + JSON.stringify(tokenData));
       }
 
+      // Extract email from ID token for better error messages
+      let userEmail = null;
+      try {
+        const tokenPayload = JSON.parse(atob(tokenData.id_token.split('.')[1]));
+        userEmail = tokenPayload.email;
+        console.log('Google sign-in email:', userEmail);
+      } catch (e) {
+        console.warn('Could not extract email from ID token:', e);
+      }
+
       const credential = GoogleAuthProvider.credential(tokenData.id_token);
-      const userCredential = await signInWithCredential(auth, credential);
-      return userCredential;
+      
+      // If user is already signed in, try to link the Google account
+      if (auth.currentUser) {
+        console.log('User already signed in, attempting to link Google account...');
+        try {
+          const linkedCredential = await linkWithCredential(auth.currentUser, credential);
+          console.log('Google account linked successfully');
+          return linkedCredential;
+        } catch (linkError) {
+          console.error('Account linking failed:', linkError.code, linkError.message);
+          
+          // If linking fails because credential already exists, that's okay
+          if (linkError.code === 'auth/credential-already-in-use') {
+            console.log('Google account already linked to this user');
+            return { user: auth.currentUser }; // Return current user
+          }
+          
+          // If it's the account-exists error, provide helpful message
+          if (linkError.code === 'auth/account-exists-with-different-credential') {
+            throw new Error(
+              'This Google account is already linked to a different account.\n\n' +
+              'Please sign out and sign in with your email/password account first.'
+            );
+          }
+          
+          // For other errors, throw them
+          throw linkError;
+        }
+      }
+      
+      // Check if account exists BEFORE trying to sign in (to prevent Expo proxy error)
+      if (userEmail) {
+        try {
+          const signInMethods = await fetchSignInMethodsForEmail(auth, userEmail);
+          console.log('Available sign-in methods for', userEmail, ':', signInMethods);
+          
+          // If account exists with password but not Google, warn user before attempting
+          if (signInMethods.includes('password') && !signInMethods.includes('google.com')) {
+            throw new Error(
+              'An account with this email already exists using email/password sign-in.\n\n' +
+              'Please sign in with your email and password instead of Google.\n\n' +
+              'If you want to use Google sign-in, you can link your Google account after signing in with email/password.'
+            );
+          }
+        } catch (preCheckError) {
+          // If it's our custom error, throw it
+          if (preCheckError.message.includes('already exists')) {
+            throw preCheckError;
+          }
+          // Otherwise, continue - the account might not exist yet
+          console.log('Pre-check completed, proceeding with sign-in');
+        }
+      }
+      
+      try {
+        const userCredential = await signInWithCredential(auth, credential);
+        console.log('Google sign-in successful');
+        return userCredential;
+      } catch (error) {
+        console.error('Firebase sign-in error:', error.code, error.message);
+        console.error('Full error:', JSON.stringify(error, null, 2));
+        
+        // Handle case where account exists with different credential (email/password)
+        if (error.code === 'auth/account-exists-with-different-credential') {
+          const email = userEmail || error.email;
+          
+          if (email) {
+            try {
+              // Check what sign-in methods are available for this email
+              const signInMethods = await fetchSignInMethodsForEmail(auth, email);
+              console.log('Available sign-in methods for', email, ':', signInMethods);
+              
+              if (signInMethods.includes('password')) {
+                throw new Error(
+                  'An account with this email already exists using email/password sign-in.\n\n' +
+                  'Please sign in with your email and password instead of Google.\n\n' +
+                  'If you want to use Google sign-in, you can link your Google account after signing in with email/password.'
+                );
+              } else {
+                throw new Error(
+                  'An account with this email already exists with a different sign-in method.\n\n' +
+                  'Please sign in using: ' + signInMethods.join(' or ')
+                );
+              }
+            } catch (methodsError) {
+              // If fetchSignInMethodsForEmail fails, still provide helpful message
+              if (methodsError.message.includes('already exists')) {
+                throw methodsError;
+              }
+              throw new Error(
+                'An account with this email already exists with a different sign-in method.\n\n' +
+                'Please sign in with your email and password instead of Google.'
+              );
+            }
+          } else {
+            throw new Error(
+              'An account with this email already exists with a different sign-in method.\n\n' +
+              'Please sign in with your email and password instead of Google.'
+            );
+          }
+        }
+        
+        // If user is already signed in, try to link the accounts
+        if (auth.currentUser && error.code !== 'auth/account-exists-with-different-credential') {
+          try {
+            console.log('Attempting to link Google account to existing user');
+            const linkedCredential = await linkWithCredential(auth.currentUser, credential);
+            return linkedCredential;
+          } catch (linkError) {
+            console.error('Account linking failed:', linkError);
+            // If linking fails, re-throw the original error
+            throw error;
+          }
+        }
+        
+        // Re-throw other errors
+        throw error;
+      }
     } else if (result.type === 'cancel') {
       throw new Error('Google sign-in was cancelled');
+    } else if (result.type === 'error') {
+      // Handle OAuth errors from Expo proxy
+      const errorMessage = result.error?.message || result.params?.error || 'Unknown OAuth error';
+      const errorDescription = result.params?.error_description || '';
+      console.error('OAuth error from proxy:', errorMessage, errorDescription);
+      console.error('Full error result:', JSON.stringify(result, null, 2));
+      
+      // Check if it's the account-exists error
+      if (errorMessage.includes('account') || errorMessage.includes('exists') || errorDescription?.includes('account')) {
+        throw new Error(
+          'An account with this email already exists with a different sign-in method.\n\n' +
+          'Please sign in with your email and password instead of Google.'
+        );
+      }
+      
+      throw new Error(
+        `Google sign-in failed: ${errorMessage}${errorDescription ? '\n' + errorDescription : ''}\n\n` +
+        'If you already have an account with this email using email/password, please sign in with that method instead.'
+      );
+    } else if (result.type === 'dismiss') {
+      throw new Error('Google sign-in was dismissed');
     } else {
-      throw new Error(`Google sign-in failed: ${result.type}`);
+      console.error('Unexpected OAuth result:', JSON.stringify(result, null, 2));
+      throw new Error(`Google sign-in failed: ${result.type}. Please try signing in with your email and password if you already have an account.`);
     }
   } catch (error) {
     console.error('Google sign-in error:', error);

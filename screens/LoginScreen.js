@@ -32,7 +32,13 @@ export default function LoginScreen({ navigation }) {
       }
       
       let errorMessage = 'Failed to sign in with Google. Please try again.';
-      if (error.message?.includes('not configured') || error.message?.includes('Client ID')) {
+      
+      // Handle account exists with different credential
+      if (error.message?.includes('already exists') || error.code === 'auth/account-exists-with-different-credential') {
+        errorMessage = error.message || 
+          'An account with this email already exists using email/password sign-in.\n\n' +
+          'Please sign in with your email and password instead.';
+      } else if (error.message?.includes('not configured') || error.message?.includes('Client ID')) {
         errorMessage = error.message;
       } else if (error.message?.includes('404') || error.message?.includes('not found')) {
         errorMessage = 'Google OAuth Client ID not configured correctly.\n\n' +
@@ -41,6 +47,9 @@ export default function LoginScreen({ navigation }) {
           '2. Copy the OAuth client ID\n' +
           '3. Add EXPO_PUBLIC_GOOGLE_CLIENT_ID=your_client_id to .env file\n' +
           '4. Restart your Expo server';
+      } else if (error.message) {
+        // Use the error message if it's informative
+        errorMessage = error.message;
       }
       
       Alert.alert('Sign in failed', errorMessage);

@@ -2,7 +2,8 @@ import { MaterialCommunityIcons } from '@expo/vector-icons';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
-import React from 'react';
+import * as WebBrowser from 'expo-web-browser';
+import React, { useEffect } from 'react';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 // contexts
@@ -64,6 +65,11 @@ function MainTabs() {
 }
 
 export default function App() {
+  // Complete any pending OAuth sessions when app starts
+  useEffect(() => {
+    WebBrowser.maybeCompleteAuthSession();
+  }, []);
+
   return (
     <SafeAreaProvider>
       <ClosetProvider>
