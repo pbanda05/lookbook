@@ -1,12 +1,13 @@
 // Authentication Service for Social Logins
 import * as AppleAuthentication from 'expo-apple-authentication';
 import * as AuthSession from 'expo-auth-session';
+import Constants from 'expo-constants';
 import * as WebBrowser from 'expo-web-browser';
-import { 
-  GoogleAuthProvider, 
-  signInWithCredential, 
+import {
+  GoogleAuthProvider,
   OAuthProvider,
-  signInAnonymously 
+  signInAnonymously,
+  signInWithCredential
 } from 'firebase/auth';
 import { auth } from '../firebaseConfig';
 
@@ -33,20 +34,35 @@ export async function signInWithGoogle() {
     }
 
     // Create OAuth request with proper configuration
-    // Use code flow (not id_token) to avoid PKCE issues
-    const redirectUri = AuthSession.makeRedirectUri({
-      useProxy: true,
-      scheme: 'lookbook',
+    // Use Expo's proxy for redirect URI (required for Expo Go + Web client ID)
+    let redirectUri = AuthSession.makeRedirectUri({
+      useProxy: true, // 👈 IMPORTANT: Forces use of https://auth.expo.io/... instead of exp://...
     });
 
+    // If makeRedirectUri didn't return the proxy URL, construct it explicitly
+    // This can happen in some Expo Go environments where useProxy: true doesn't work
+    if (!redirectUri.startsWith('https://auth.expo.io/')) {
+      console.warn('⚠️ makeRedirectUri did not return proxy URL, constructing explicitly...');
+      console.warn('Got:', redirectUri, '- Expected: https://auth.expo.io/@pbanda05/lookbook');
+      
+      // Try to get username and slug from Constants, fallback to known values
+      const expoConfig = Constants.expoConfig || Constants.manifest2?.extra?.expoClient;
+      const username = expoConfig?.owner || Constants.manifest?.owner || 'pbanda05';
+      const slug = expoConfig?.slug || Constants.manifest?.slug || 'lookbook';
+      
+      redirectUri = `https://auth.expo.io/@${username}/${slug}`;
+      console.log('✅ Using explicitly constructed proxy URL:', redirectUri);
+    }
+
     console.log('Google OAuth redirect URI:', redirectUri);
+    console.log('Make sure this URI is added to Google Cloud Console authorized redirect URIs');
 
     const request = new AuthSession.AuthRequest({
       clientId: GOOGLE_CLIENT_ID,
       scopes: ['openid', 'profile', 'email'],
-      responseType: AuthSession.ResponseType.Code, // Use code flow instead of id_token
+      responseType: AuthSession.ResponseType.Code,
       redirectUri: redirectUri,
-      usePKCE: false, // Disable PKCE to avoid the error
+      usePKCE: true, // Enable PKCE for security (required by Google)
     });
 
     // Use Google's discovery document
@@ -56,6 +72,7 @@ export async function signInWithGoogle() {
       revocationEndpoint: 'https://oauth2.googleapis.com/revoke',
     };
 
+    // promptAsync will use the redirectUri we set in the AuthRequest
     const result = await request.promptAsync(discovery);
 
     if (result.type === 'success') {
@@ -64,7 +81,10 @@ export async function signInWithGoogle() {
         throw new Error('No authorization code received from Google.');
       }
 
-      // Exchange code for ID token
+      // Exchange code for ID token using PKCE
+      // Get the code verifier from the request
+      const codeVerifier = request.codeVerifier;
+      
       const tokenResponse = await fetch(discovery.tokenEndpoint, {
         method: 'POST',
         headers: {
@@ -73,15 +93,21 @@ export async function signInWithGoogle() {
         body: new URLSearchParams({
           client_id: GOOGLE_CLIENT_ID,
           code: code,
-          grant_type: 'authorization_code',
           redirect_uri: redirectUri,
+          grant_type: 'authorization_code',
+          code_verifier: codeVerifier,
         }).toString(),
       });
+
+      if (!tokenResponse.ok) {
+        const errorText = await tokenResponse.text();
+        throw new Error(`Token exchange failed: ${errorText}`);
+      }
 
       const tokenData = await tokenResponse.json();
       
       if (!tokenData.id_token) {
-        throw new Error('Failed to exchange code for ID token.');
+        throw new Error('Failed to exchange code for ID token. Response: ' + JSON.stringify(tokenData));
       }
 
       const credential = GoogleAuthProvider.credential(tokenData.id_token);
