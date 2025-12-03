@@ -1,166 +1,359 @@
 // OpenAI API Service for Outfit Generation
-// IMPORTANT: Replace 'YOUR_OPENAI_API_KEY' with your actual API key
-// You can get one from https://platform.openai.com/api-keys
-// For production, store this in environment variables or secure storage (e.g., Expo Constants)
-
-const OPENAI_API_KEY = process.env.EXPO_PUBLIC_OPENAI_API_KEY || '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';
+// IMPORTANT: don't ship a real key in code in production.
+const OPENAI_API_KEY =
+  process.env.EXPO_PUBLIC_OPENAI_API_KEY || 'YOUR_OPENAI_API_KEY_HERE';
 const OPENAI_API_URL = 'https://api.openai.com/v1/chat/completions';
 
-// Smart fallback algorithm when API key is not configured
-function generateOutfitFallback(closetItems, vibe) {
-  const vibeLower = vibe.toLowerCase();
-  const shuffled = [...closetItems];
-  
-  // Shuffle array randomly
-  for (let i = shuffled.length - 1; i > 0; i--) {
-    const j = Math.floor(Math.random() * (i + 1));
-    [shuffled[i], shuffled[j]] = [shuffled[j], shuffled[i]];
+function getCategory(item) {
+  if (item.category) return item.category; // 'top' | 'bottom' | 'shoes' | 'accessory'
+  const name = item.name?.toLowerCase() || '';
+
+  if (
+    name.includes('t-shirt') ||
+    name.includes('tee') ||
+    name.includes('shirt') ||
+    name.includes('top') ||
+    name.includes('blouse') ||
+    name.includes('hoodie') ||
+    name.includes('sweater') ||
+    name.includes('crewneck') ||
+    name.includes('jacket') ||
+    name.includes('coat') ||
+    name.includes('quarter-zip') ||
+    name.includes('blazer') ||
+    name.includes('cardigan')
+  ) {
+    return 'top';
   }
-  
-  // Select 3-5 items, ensuring shoes are included if available
-  const shoes = shuffled.filter(item => 
-    item.name?.toLowerCase().includes('shoe') || 
-    item.name?.toLowerCase().includes('sneaker') ||
-    item.name?.toLowerCase().includes('boot') ||
-    item.name?.toLowerCase().includes('sandal') ||
-    item.name?.toLowerCase().includes('air force') ||
-    item.name?.toLowerCase().includes('jordan')
-  );
-  
-  const nonShoes = shuffled.filter(item => !shoes.includes(item));
-  const numItems = Math.min(Math.max(3, Math.floor(Math.random() * 3) + 3), shuffled.length);
-  
-  let selectedItems = [];
-  if (shoes.length > 0 && numItems > 0) {
-    // Always include at least one pair of shoes
-    selectedItems.push(shoes[0]);
-    const remaining = numItems - 1;
-    selectedItems = [...selectedItems, ...nonShoes.slice(0, Math.min(remaining, nonShoes.length))];
-  } else {
-    selectedItems = shuffled.slice(0, numItems);
+
+  if (
+    name.includes('jeans') ||
+    name.includes('pants') ||
+    name.includes('trousers') ||
+    name.includes('slacks') ||
+    name.includes('shorts') ||
+    name.includes('skirt') ||
+    name.includes('joggers') ||
+    name.includes('sweatpants') ||
+    name.includes('leggings') ||
+    name.includes('cargos') ||
+    name.includes('chinos') ||
+    name.includes('capris') 
+  ) {
+    return 'bottom';
   }
-  
-  const selectedIndices = selectedItems.map(item => closetItems.indexOf(item));
-  
-  // Generate a description based on vibe
-  const vibeDescriptions = {
-    casual: 'A relaxed and comfortable',
-    formal: 'An elegant and sophisticated',
-    'date night': 'A romantic and stylish',
-    'business casual': 'A professional yet approachable',
-    sporty: 'An athletic and functional',
-    edgy: 'A bold and statement-making',
-  };
-  
-  const vibeDesc = vibeDescriptions[vibeLower] || 'A stylish';
-  const itemNames = selectedItems.map(item => item.name).join(', ');
-  
-  return {
-    selectedItemIndices: selectedIndices,
-    description: `${vibeDesc} ${vibe} outfit featuring ${itemNames}`,
-    reasoning: `These items work together to create a cohesive ${vibe} look that's perfect for the occasion.`,
-  };
+
+  if (
+    name.includes('shoe') ||
+    name.includes('sneaker') ||
+    name.includes('trainer') ||
+    name.includes('boot') ||
+    name.includes('sandal') ||
+    name.includes('heel') ||
+    name.includes('air force') ||
+    name.includes('jordan')
+  ) {
+    return 'shoes';
+  }
+
+  return 'accessory';
 }
 
-export async function generateOutfitWithAI(closetItems, vibe) {
-  // Check if API key is valid (not placeholder and not empty)
-  const hasValidApiKey = OPENAI_API_KEY && 
-                         OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY' && 
-                         OPENAI_API_KEY.trim().length > 0 &&
-                         OPENAI_API_KEY.startsWith('sk-');
+function isTop(item) {
+  return getCategory(item) === 'top';
+}
+function isBottom(item) {
+  return getCategory(item) === 'bottom';
+}
+function isShoe(item) {
+  return getCategory(item) === 'shoes';
+}
 
-  if (!hasValidApiKey) {
-    console.log('⚠️ Using fallback outfit generation (no valid API key configured)');
-    console.log('API Key status:', OPENAI_API_KEY ? 'Present but invalid' : 'Missing');
-    // Simulate API delay for better UX
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    return generateOutfitFallback(closetItems, vibe);
+
+// ---------- utility helpers ----------
+
+function shuffle(arr) {
+  const copy = [...arr];
+  for (let i = copy.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [copy[i], copy[j]] = [copy[j], copy[i]];
+  }
+  return copy;
+}
+
+// score an item based on Profile prefs
+function scoreItemForPreferences(item, preferences) {
+  if (!preferences) return 0;
+  const { stylePreferences = [], favoriteColors = [] } = preferences;
+  const name = item.name?.toLowerCase() || '';
+  let score = 0;
+
+  favoriteColors.forEach((color) => {
+    if (name.includes(color.toLowerCase())) score += 2;
+  });
+
+  stylePreferences.forEach((style) => {
+    if (name.includes(style.toLowerCase())) score += 3;
+  });
+
+  return score;
+}
+
+function pickWithPreferences(items, preferences) {
+  if (!items || items.length === 0) return null;
+  const scored = items.map((item) => ({
+    item,
+    score: scoreItemForPreferences(item, preferences) + Math.random(), // tiny noise
+  }));
+  scored.sort((a, b) => b.score - a.score);
+  return scored[0].item;
+}
+
+// ---------- core: select outfit in JS ----------
+
+// function selectOutfitFromCloset(closetItems, vibe, preferences) {
+//   const tops = closetItems.filter(isTop);
+//   const bottoms = closetItems.filter(isBottom);
+//   const shoes = closetItems.filter(isShoe);
+//   const accessories = closetItems.filter(
+//     (item) => !isTop(item) && !isBottom(item) && !isShoe(item)
+//   );
+
+//   if (!tops.length || !bottoms.length || !shoes.length) {
+//     // super basic fallback: random 3–5 items
+//     console.warn(
+//       'Not enough categorized items for top+bottom+shoes – using random mix.'
+//     );
+//     const shuffled = shuffle(closetItems);
+//     const num = Math.min(5, Math.max(3, shuffled.length));
+//     const chosen = shuffled.slice(0, num);
+//     const indices = chosen.map((item) => closetItems.indexOf(item));
+//     return { indices, items: chosen };
+//   }
+
+//   const top = pickWithPreferences(tops, preferences);
+//   const bottom = pickWithPreferences(bottoms, preferences);
+//   const shoe = pickWithPreferences(shoes, preferences);
+
+//   const usedIds = new Set(
+//     [top, bottom, shoe].map((i) => i.id ?? `${i.name}-${i.imageUri || ''}`)
+//   );
+
+//   const extrasPool = shuffle(
+//     accessories.filter(
+//       (item) =>
+//         !usedIds.has(item.id ?? `${item.name}-${item.imageUri || ''}`)
+//     )
+//   );
+
+//   // 0–2 extras so total is 3–5 items
+//   const extraCount =
+//     extrasPool.length === 0 ? 0 : Math.floor(Math.random() * 3); // 0,1,2
+//   const extras = extrasPool.slice(0, extraCount);
+
+//   const finalItems = [top, bottom, shoe, ...extras];
+//   const indices = finalItems.map((item) => closetItems.indexOf(item));
+
+//   return { indices, items: finalItems };
+// }
+function normalizeCombo(indices) {
+  return [...indices].sort((a, b) => a - b).join('-');
+}
+
+function selectOutfitFromCloset(
+  closetItems,
+  vibe,
+  preferences,
+  previousOutfits = []
+) {
+  const tops = closetItems.filter(isTop);
+  const bottoms = closetItems.filter(isBottom);
+  const shoes = closetItems.filter(isShoe);
+  const accessories = closetItems.filter(
+    (item) => !isTop(item) && !isBottom(item) && !isShoe(item)
+  );
+
+  // Fallback if we cannot guarantee core pieces
+  if (!tops.length || !bottoms.length || !shoes.length) {
+    console.warn(
+      'Not enough categorized items for top+bottom+shoes – using random mix.'
+    );
+    const shuffled = shuffle(closetItems);
+    const num = Math.min(5, Math.max(3, shuffled.length));
+    const chosen = shuffled.slice(0, num);
+    const indices = chosen.map((item) => closetItems.indexOf(item));
+    return { indices, items: chosen };
   }
 
-  console.log('🤖 Using OpenAI AI to generate outfit...');
-  try {
+  const previousKeys = (previousOutfits || []).map(normalizeCombo);
+  const maxAttempts = 10;
 
-    // Create a list of available items for the AI
-    const itemsList = closetItems.map((item, index) => 
-      `${index + 1}. ${item.name}`
-    ).join('\n');
+  for (let attempt = 0; attempt < maxAttempts; attempt++) {
+    const top = pickWithPreferences(tops, preferences);
+    const bottom = pickWithPreferences(bottoms, preferences);
+    const shoe = pickWithPreferences(shoes, preferences);
 
-    const prompt = `You are a fashion stylist. Given the following items in a user's closet and their desired vibe, select 3-5 items that would create a cohesive, stylish outfit. IMPORTANT: Every outfit MUST include shoes. If there are shoes available in the closet, you MUST include at least one pair of shoes in your selection.
+    const usedIds = new Set(
+      [top, bottom, shoe].map(
+        (i) => i.id ?? `${i.name}-${i.imageUri || ''}`
+      )
+    );
 
-Available items in closet:
-${itemsList}
+    const extrasPool = shuffle(
+      accessories.filter(
+        (item) =>
+          !usedIds.has(item.id ?? `${item.name}-${item.imageUri || ''}`)
+      )
+    );
+
+    // 0–2 extras so total is 3–5 items
+    const extraCount =
+      extrasPool.length === 0 ? 0 : Math.floor(Math.random() * 3); // 0,1,2
+    const extras = extrasPool.slice(0, extraCount);
+
+    const finalItems = [top, bottom, shoe, ...extras];
+    const indices = finalItems.map((item) =>
+      closetItems.indexOf(item)
+    );
+    const key = normalizeCombo(indices);
+
+    // If this combo hasn't been used, or we're out of attempts, accept it
+    if (!previousKeys.includes(key) || attempt === maxAttempts - 1) {
+      return { indices, items: finalItems };
+    }
+  }
+
+  // Failsafe (should basically never hit)
+  const shuffled = shuffle(closetItems);
+  const num = Math.min(5, Math.max(3, shuffled.length));
+  const chosen = shuffled.slice(0, num);
+  const indices = chosen.map((item) => closetItems.indexOf(item));
+  return { indices, items: chosen };
+}
+// ---------- AI: describe an already-chosen outfit ----------
+
+async function describeOutfitWithAI(chosenItems, vibe, preferences) {
+  const hasValidApiKey =
+    OPENAI_API_KEY &&
+    OPENAI_API_KEY !== 'YOUR_OPENAI_API_KEY_HERE' &&
+    OPENAI_API_KEY.trim().length > 0 &&
+    OPENAI_API_KEY.startsWith('sk-');
+
+  const itemList = chosenItems.map((i) => `- ${i.name}`).join('\n');
+
+  const styleProfileText = preferences
+    ? `User style preferences:
+${JSON.stringify(
+  {
+    stylePreferences: preferences.stylePreferences || [],
+    favoriteColors: preferences.favoriteColors || [],
+  },
+  null,
+  2
+)}`
+    : 'User has no explicit style preferences.';
+
+  // If no key, just return a simple local description
+  if (!hasValidApiKey) {
+    const names = chosenItems.map((i) => i.name).join(', ');
+    return {
+      description: `A ${vibe} outfit featuring ${names}.`,
+      reasoning:
+        'Pieces were chosen to include a top, a bottom, and shoes, with extras that fit your style preferences.',
+    };
+  }
+
+  const prompt = `You are a fashion stylist.
+
+The app has ALREADY selected this specific outfit from the user's closet:
+${itemList}
 
 Desired vibe/style: ${vibe}
 
-Please respond with ONLY a JSON object in this exact format:
+${styleProfileText}
+
+Write:
+- a short, stylish outfit description (1–3 sentences)
+- a short reasoning (1–3 sentences) explaining why it works for the vibe and user.
+
+Respond ONLY as JSON in this exact format:
 {
-  "selectedItemIndices": [0, 2, 4],
-  "description": "A stylish description of the outfit",
-  "reasoning": "Brief explanation of why these items work together"
+  "description": "text...",
+  "reasoning": "text..."
+}`;
+
+  const response = await fetch(OPENAI_API_URL, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      Authorization: `Bearer ${OPENAI_API_KEY}`,
+    },
+    body: JSON.stringify({
+      model: 'gpt-4o-mini',
+      messages: [
+        {
+          role: 'system',
+          content:
+            'You are a professional fashion stylist. Always respond with valid JSON only.',
+        },
+        { role: 'user', content: prompt },
+      ],
+      temperature: 0.7,
+      max_tokens: 250,
+      response_format: { type: 'json_object' },
+    }),
+  });
+
+  if (!response.ok) {
+    throw new Error('Failed to call OpenAI');
+  }
+
+  const data = await response.json();
+  const text = data.choices[0].message.content;
+  const parsed = JSON.parse(text);
+
+  return {
+    description: parsed.description || '',
+    reasoning: parsed.reasoning || '',
+  };
 }
 
-The selectedItemIndices should be the array indices (0-based) of the items you selected from the list above. Select items that complement each other and match the desired vibe. CRITICAL: Always include shoes if available in the closet.`;
+// ---------- main function used by your screen ----------
 
-    const response = await fetch(OPENAI_API_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${OPENAI_API_KEY}`,
-      },
-      body: JSON.stringify({
-        model: 'gpt-4o-mini', // Using gpt-4o-mini for cost efficiency, can use 'gpt-4' for better results
-        messages: [
-          {
-            role: 'system',
-            content: 'You are a professional fashion stylist. Always respond with valid JSON only.',
-          },
-          {
-            role: 'user',
-            content: prompt,
-          },
-        ],
-        temperature: 0.7,
-        max_tokens: 300,
-        response_format: { type: 'json_object' },
-      }),
-    });
+export async function generateOutfitWithAI(
+  closetItems,
+  vibe,
+  preferences,
+  previousOutfits = []
+) {
+  // 1) pick the items in JS, avoiding repeats
+  const { indices, items } = selectOutfitFromCloset(
+    closetItems,
+    vibe,
+    preferences,
+    previousOutfits
+  );
 
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => ({}));
-      if (response.status === 401) {
-        throw new Error('Invalid API key. Please check your OpenAI API key.');
-      } else if (response.status === 429) {
-        throw new Error('API rate limit exceeded. Please try again later.');
-      }
-      throw new Error(errorData.error?.message || 'Failed to generate outfit');
-    }
-
-    const data = await response.json();
-    const responseText = data.choices[0].message.content;
-    const result = JSON.parse(responseText);
-
-    console.log('✅ AI outfit generated successfully');
-    console.log('Selected items:', result.selectedItemIndices);
-
+  // 2) ask AI to describe them
+  try {
+    const { description, reasoning } = await describeOutfitWithAI(
+      items,
+      vibe,
+      preferences
+    );
     return {
-      selectedItemIndices: result.selectedItemIndices || [],
-      description: result.description || 'Generated outfit',
-      reasoning: result.reasoning || '',
+      selectedItemIndices: indices,
+      description: description || 'Generated outfit',
+      reasoning: reasoning || '',
     };
-  } catch (error) {
-    console.error('❌ AI Generation Error:', error);
-    
-    // If API call fails, fall back to smart algorithm
-    if (error.message?.includes('API key') || error.message?.includes('401')) {
-      console.log('⚠️ API key error detected, using fallback');
-      await new Promise(resolve => setTimeout(resolve, 500));
-      return generateOutfitFallback(closetItems, vibe);
-    }
-    
-    // For other errors, try fallback before throwing
-    console.log('⚠️ AI generation failed, using fallback algorithm');
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return generateOutfitFallback(closetItems, vibe);
+  } catch (err) {
+    console.error('AI description failed, using simple fallback:', err);
+    const names = items.map((i) => i.name).join(', ');
+    return {
+      selectedItemIndices: indices,
+      description: `A ${vibe} outfit featuring ${names}.`,
+      reasoning:
+        'Includes a top, a bottom, and shoes, plus extras that complement the vibe.',
+    };
   }
 }
-

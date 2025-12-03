@@ -7,8 +7,10 @@ import PrimaryButton from '../components/PrimaryButton';
 import SafeScreen from "../components/SafeScreen";
 import { useCloset } from '../context/ClosetContext';
 import { useSavedOutfits } from '../context/SavedOutfitsContext';
+import { useUserPreferences } from '../context/UserPreferencesContext';
 import { generateOutfitWithAI } from '../services/aiService';
 import { useTheme } from '../theme';
+
 
 export default function GenerateScreen() {
   const [vibe, setVibe] = useState('');
@@ -18,7 +20,78 @@ export default function GenerateScreen() {
   const theme = useTheme();
   const { items } = useCloset();
   const { saveOutfit } = useSavedOutfits();
+  const { preferences } = useUserPreferences();
 
+  // async function generateOutfit() {
+  //   if (!vibe.trim()) {
+  //     Alert.alert('No vibe specified', 'Please describe the vibe you want');
+  //     return;
+  //   }
+  
+  //   if (items.length < 3) {
+  //     Alert.alert('Not enough items', 'Add at least 3 items to your closet to generate outfits');
+  //     return;
+  //   }
+  
+  //   setGenerating(true);
+  //   setGeneratedOutfits([]);
+  //   setSavedOutfits(new Set());
+  
+  //   try {
+  //     const numOutfits = Math.min(5, Math.max(3, Math.floor(items.length / 2)));
+  //     const outfits = [];
+  //     const previousOutfits = []; // <-- store arrays of indices here
+  
+  //     for (let i = 0; i < numOutfits; i++) {
+  //       const aiResult = await generateOutfitWithAI(
+  //         items,
+  //         vibe.trim(),
+  //         preferences,       // from useUserPreferences()
+  //         previousOutfits    // NEW: tell the generator what we’ve already used
+  //       );
+  
+  //       const selectedItems = aiResult.selectedItemIndices
+  //         ?.filter(idx => idx >= 0 && idx < items.length)
+  //         .map(idx => items[idx]) || [];
+  
+  //       if (selectedItems.length === 0) {
+  //         continue;
+  //       }
+  
+  //       outfits.push({
+  //         id: `outfit-${Date.now()}-${i}`,
+  //         items: selectedItems,
+  //         description: aiResult.description || `Outfit option ${i + 1}`,
+  //         reasoning: aiResult.reasoning || '',
+  //       });
+  
+  //       // remember this outfit so next call avoids the same combo
+  //       previousOutfits.push(aiResult.selectedItemIndices || []);
+  //     }
+  
+  //     if (outfits.length === 0) {
+  //       throw new Error('Failed to generate any valid outfits');
+  //     }
+  
+  //     setGeneratedOutfits(outfits);
+  //   } catch (error) {
+  //     console.error('Outfit generation error:', error);
+  //     let errorMessage = 'Failed to generate outfit. Please try again.';
+  
+  //     if (error.message?.includes('API key')) {
+  //       errorMessage =
+  //         'OpenAI API key not configured. Please add your API key in services/aiService.js';
+  //     } else if (error.message?.includes('rate limit')) {
+  //       errorMessage = 'API rate limit exceeded. Please try again later.';
+  //     } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
+  //       errorMessage = 'Network error. Please check your internet connection.';
+  //     }
+  
+  //     Alert.alert('Error', errorMessage);
+  //   } finally {
+  //     setGenerating(false);
+  //   }
+  // }
   async function generateOutfit() {
     if (!vibe.trim()) {
       Alert.alert('No vibe specified', 'Please describe the vibe you want');
@@ -26,7 +99,10 @@ export default function GenerateScreen() {
     }
 
     if (items.length < 3) {
-      Alert.alert('Not enough items', 'Add at least 3 items to your closet to generate outfits');
+      Alert.alert(
+        'Not enough items',
+        'Add at least 3 items to your closet to generate outfits'
+      );
       return;
     }
 
@@ -35,32 +111,41 @@ export default function GenerateScreen() {
     setSavedOutfits(new Set());
 
     try {
-      // Generate 3-5 outfit options
-      const numOutfits = Math.min(5, Math.max(3, Math.floor(items.length / 2)));
-      const outfitPromises = [];
-      
+      const numOutfits = Math.min(
+        5,
+        Math.max(3, Math.floor(items.length / 2))
+      );
+
+      const previousOutfits = []; // each element = [indices...]
+      const outfits = [];
+
       for (let i = 0; i < numOutfits; i++) {
-        outfitPromises.push(generateOutfitWithAI(items, vibe.trim()));
-      }
-      
-      const results = await Promise.all(outfitPromises);
-      
-      const outfits = results.map((aiResult, index) => {
+        const aiResult = await generateOutfitWithAI(
+          items,
+          vibe.trim(),
+          preferences,
+          previousOutfits
+        );
+
         const selectedItems = aiResult.selectedItemIndices
-          .filter(idx => idx >= 0 && idx < items.length)
-          .map(idx => items[idx]);
+          .filter((idx) => idx >= 0 && idx < items.length)
+          .map((idx) => items[idx]);
 
         if (selectedItems.length === 0) {
-          return null;
+          continue;
         }
 
-        return {
-          id: `outfit-${Date.now()}-${index}`,
+        // remember this combo so we don't repeat it
+        previousOutfits.push(aiResult.selectedItemIndices);
+
+        outfits.push({
+          id: `outfit-${Date.now()}-${i}`,
           items: selectedItems,
-          description: aiResult.description || `Outfit option ${index + 1}`,
+          description:
+            aiResult.description || `Outfit option ${i + 1}`,
           reasoning: aiResult.reasoning || '',
-        };
-      }).filter(outfit => outfit !== null);
+        });
+      }
 
       if (outfits.length === 0) {
         throw new Error('Failed to generate any valid outfits');
@@ -69,22 +154,29 @@ export default function GenerateScreen() {
       setGeneratedOutfits(outfits);
     } catch (error) {
       console.error('Outfit generation error:', error);
-      
-      let errorMessage = 'Failed to generate outfit. Please try again.';
-      
+
+      let errorMessage =
+        'Failed to generate outfit. Please try again.';
+
       if (error.message?.includes('API key')) {
-        errorMessage = 'OpenAI API key not configured. Please add your API key in services/aiService.js';
+        errorMessage =
+          'OpenAI API key not configured. Please add your API key in services/aiService.js';
       } else if (error.message?.includes('rate limit')) {
         errorMessage = 'API rate limit exceeded. Please try again later.';
-      } else if (error.message?.includes('network') || error.message?.includes('fetch')) {
-        errorMessage = 'Network error. Please check your internet connection.';
+      } else if (
+        error.message?.includes('network') ||
+        error.message?.includes('fetch')
+      ) {
+        errorMessage =
+          'Network error. Please check your internet connection.';
       }
-      
+
       Alert.alert('Error', errorMessage);
     } finally {
       setGenerating(false);
     }
   }
+
 
   async function handleSaveOutfit(outfit) {
     try {
