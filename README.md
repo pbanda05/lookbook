@@ -34,7 +34,4 @@ LookBook is a cross-platform fashion-curation mobile app that lets users upload,
 
 ---
 
-## 🗂 Project Structure
-
-> Adjust folder names if needed.
 
