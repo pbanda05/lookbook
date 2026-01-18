@@ -1,50 +1,40 @@
-# Welcome to your Expo app 👋
+# LookBook (Fashion Curation App)
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+LookBook is a cross-platform fashion-curation mobile app that lets users upload, organize, and browse outfits through a clean, modern interface. This is a full-stack project featuring a React Native (Expo) mobile client, Firebase Authentication for secure login, and a Node.js/Express + MongoDB backend powering core functionality.
 
-## Get started
+---
 
-1. Install dependencies
+## ✨ Features
 
-   ```bash
-   npm install
-   ```
+- **Cross-platform mobile app** (iOS + Android) with a clean UI
+- **Secure authentication** using **Firebase Auth**
+- **Photo uploads** (camera + gallery)
+- **Outfit feed** to browse and explore saved looks
+- **Wishlists** to save outfits/items for later
+- **User profiles** with personalized content
+- **Reusable UI components** aligned with custom **Figma/Base44** design system
+- Focused on **performance**, **optimized API design**, and **clean code practices**
 
-2. Start the app
+---
 
-   ```bash
-   npx expo start
-   ```
+## 🧱 Tech Stack
 
-In the output, you'll find options to open the app in a
+**Frontend**
+- React Native (Expo)
+- Component-based architecture
+- UI based on custom Figma/Base44 components
 
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
+**Backend**
+- Node.js
+- Express.js
+- MongoDB
 
-You can start developing by editing the files inside the **app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
+**Auth**
+- Firebase Authentication
 
-## Get a fresh project
+---
 
-When you're ready, run:
+## 🗂 Project Structure
 
-```bash
-npm run reset-project
-```
+> Adjust folder names if needed.
 
-This command will move the starter code to the **app-example** directory and create a blank **app** directory where you can start developing.
-
-## Learn more
-
-To learn more about developing your project with Expo, look at the following resources:
-
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
-
-## Join the community
-
-Join our community of developers creating universal apps.
-
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
